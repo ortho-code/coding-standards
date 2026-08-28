@@ -25,6 +25,8 @@ use OrthoCode\StandardsSync\Rules\Psalm\BaseConfig\PsalmBaseConfig;
 use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmErrorLevel;
 use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmLoosestErrorLevel;
 use OrthoCode\StandardsSync\Rules\Rector\BaseSet\RectorBaseSet;
+use OrthoCode\StandardsSync\Rules\Renovate\ExtendedPreset\RenovateExtendedPreset;
+use OrthoCode\StandardsSync\Rules\Renovate\RenovateConfigFormat;
 use Override;
 
 /** OrthoCode's standard for library packages; applications get their own tier. */
@@ -42,6 +44,7 @@ final class PackageStandard extends Standard
         $this->enforceRector($package);
         $this->enforcePhpStan($package);
         $this->enforcePsalm($package);
+        $this->enforceRenovate();
         $this->enforceToolchain();
     }
 
@@ -130,6 +133,16 @@ final class PackageStandard extends Standard
         $this->addRule(new PsalmLoosestErrorLevel(loosest: PsalmErrorLevel::fromInt(2)));
         $this->addRule(new ComposerRequirement(package: 'vimeo/psalm', constraint: VersionConstraint::fromString('^6')));
         $this->addRule(new ComposerScript(name: 'app-psalm', commands: ['psalm']));
+    }
+
+    /** The shared preset via a native extends entry. The preset itself lives at this repository's root, not under templates/: the renovate bot fetches it over the forge API, never from a composer install. */
+    private function enforceRenovate(): void
+    {
+        $this->addRule(new RenovateExtendedPreset(
+            preset: 'local>ortho-code/coding-standards:renovate-package-preset',
+            createAs: RenovateConfigFormat::Json5,
+            comment: 'ortho-code coding standards; sync re-adds this entry',
+        ));
     }
 
     /** Synced configs enforce nothing until something runs them: app-checks is the entry point developers and CI call by name, and every family added later appends to it. */

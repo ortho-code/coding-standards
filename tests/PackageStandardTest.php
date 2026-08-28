@@ -211,6 +211,44 @@ final class PackageStandardTest extends TestCase
         self::assertTrue(PsalmErrorLevel::fromConfigValue($written)->isAtMost($limit->loosest()));
     }
 
+    public function testSyncingCreatesAnAnnotatedRenovateConfigWhenTheProjectHasNone(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./renovate.json5', $result);
+        self::assertStringContainsString('"local>ortho-code/coding-standards:renovate-package-preset" // ortho-code coding standards; sync re-adds this entry', $result['./renovate.json5']);
+    }
+
+    public function testSyncingAddsTheExtendsEntryToAnExistingRenovateConfig(): void
+    {
+        $existing = FileContent::fromString(
+            <<<'JSON'
+                {
+                  "extends": [
+                    "config:recommended"
+                  ]
+                }
+                JSON,
+        );
+
+        $result = (new SyncTester())->sync($this->config(), [
+            './renovate.json' => $existing,
+        ]);
+
+        self::assertStringContainsString('"local>ortho-code/coding-standards:renovate-package-preset"', $result['./renovate.json']);
+        self::assertStringContainsString('"config:recommended"', $result['./renovate.json']);
+        self::assertArrayNotHasKey('./renovate.json5', $result);
+    }
+
+    // The preset the extends entry points at must parse, or every consumer's renovate run breaks at once.
+    public function testTheShippedRenovatePresetIsValidStrictJson(): void
+    {
+        $preset = json_decode((string) file_get_contents(__DIR__ . '/../renovate-package-preset.json'), true, flags: JSON_THROW_ON_ERROR);
+
+        self::assertIsArray($preset);
+        self::assertArrayHasKey('extends', $preset);
+    }
+
     public function testSyncingRequiresTheToolsItConfigures(): void
     {
         $result = (new SyncTester())->sync($this->config(), [
