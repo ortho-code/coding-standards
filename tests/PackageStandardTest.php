@@ -11,6 +11,7 @@ use OrthoCode\StandardsSync\Core\Config\SyncConfig;
 use OrthoCode\StandardsSync\Core\Filesystem\Path;
 use OrthoCode\StandardsSync\Core\Rule\Rule;
 use OrthoCode\StandardsSync\Formats\Xml\XmlElementWriter;
+use OrthoCode\StandardsSync\Rules\Composer\Script\ComposerScript;
 use OrthoCode\StandardsSync\Rules\PhpStan\MinLevel\PhpStanMinLevel;
 use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
 use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmErrorLevel;
@@ -247,6 +248,37 @@ final class PackageStandardTest extends TestCase
 
         self::assertIsArray($preset);
         self::assertArrayHasKey('extends', $preset);
+    }
+
+    public function testSyncingDropsTheManagedWorkflowBlock(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./.github/workflows/standards.yml', $result);
+        self::assertStringContainsString('ortho-code', $result['./.github/workflows/standards.yml']);
+    }
+
+    // The workflow calls the script by name and nothing in the engine ties them together, so a rename would leave CI running nothing.
+    public function testTheWorkflowCallsTheScriptTheStandardDeclares(): void
+    {
+        $aggregate = array_find(
+            (new PackageStandard())->rules(),
+            static fn(Rule $rule): bool => $rule instanceof ComposerScript && $rule->name() === 'app-checks',
+        );
+        self::assertInstanceOf(ComposerScript::class, $aggregate);
+
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertStringContainsString(sprintf('composer %s', $aggregate->name()), $result['./.github/workflows/standards.yml']);
+    }
+
+    public function testSyncingRequiresThePhpVersionTheWorkflowRuns(): void
+    {
+        $result = (new SyncTester())->sync($this->config(), [
+            './composer.json' => '{"name": "acme/consumer"}',
+        ]);
+
+        self::assertStringContainsString('"php"', $result['./composer.json']);
     }
 
     public function testSyncingRequiresTheToolsItConfigures(): void

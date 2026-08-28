@@ -9,6 +9,7 @@ use OrthoCode\StandardsSync\Authoring\Standard;
 use OrthoCode\StandardsSync\Core\Rule\FileTarget;
 use OrthoCode\StandardsSync\Rules\Composer\ConfigSetting\ComposerConfigSetting;
 use OrthoCode\StandardsSync\Rules\Composer\Requirement\ComposerRequirement;
+use OrthoCode\StandardsSync\Rules\Composer\Requirement\RequirementType;
 use OrthoCode\StandardsSync\Rules\Composer\Requirement\VersionConstraint;
 use OrthoCode\StandardsSync\Rules\Composer\Script\ComposerScript;
 use OrthoCode\StandardsSync\Rules\Ecs\BaseSet\EcsBaseSet;
@@ -45,7 +46,7 @@ final class PackageStandard extends Standard
         $this->enforcePhpStan($package);
         $this->enforcePsalm($package);
         $this->enforceRenovate();
-        $this->enforceToolchain();
+        $this->enforceToolchain($package);
     }
 
     private function enforceEditorConfig(Package $package): void
@@ -146,12 +147,20 @@ final class PackageStandard extends Standard
     }
 
     /** Synced configs enforce nothing until something runs them: app-checks is the entry point developers and CI call by name, and every family added later appends to it. */
-    private function enforceToolchain(): void
+    private function enforceToolchain(Package $package): void
     {
+        // The runtime floor the shipped workflow's php-version assumes; raise the two together.
+        $this->addRule(new ComposerRequirement(package: 'php', constraint: VersionConstraint::fromString('^8.5'), type: RequirementType::Runtime));
         $this->addRule(new ComposerConfigSetting(setting: 'sort-packages', value: true));
         // Composer puts vendor/bin on PATH for scripts, so entries name the bare binary.
         $this->addRule(new ComposerScript(name: 'app-sync', commands: ['standards-sync sync']));
         $this->addRule(new ComposerScript(name: 'app-sync-check', commands: ['standards-sync sync --check']));
         $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-phpstan', '@app-psalm', '@app-rector', '@app-run-tests']));
+        // The workflow calls app-checks by name and nothing in the engine ties the two together, so the suite pins it.
+        $this->addRule(new ManagedBlock(
+            target: FileTarget::fromString('.github/workflows/standards.yml'),
+            label: Label::fromString(self::LABEL),
+            content: $package->read('package/ci-standards.yml'),
+        ));
     }
 }
