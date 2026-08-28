@@ -33,6 +33,15 @@
   "scripts": {
     "app-run-tests": [
       "vendor/bin/phpunit"
+    ],
+    "app-sync": [
+      "standards-sync sync"
+    ],
+    "app-sync-check": [
+      "standards-sync sync --check"
+    ],
+    "app-checks": [
+      "@app-sync-check"
     ]
   }
 }
