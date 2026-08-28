@@ -17,5 +17,5 @@ Keep this file project-facing (no personal workflow prefs).
 - **References are one-way.** This file may point at the README, docs and code; repo files never reference Claude config as the home of knowledge.
 - Values stay inline literals where the maintainer reads and edits them — the deliberate inverse of the engine's constants-over-literals convention. See [docs/authoring.md](docs/authoring.md).
 - A standard's rules are declared in the order the engine's declaration-order semantics require: a tool's import or template rule before its value rules.
-- This package syncs itself; its root `.editorconfig` and `.gitignore` are synced output, not hand-written.
-- Validate with `composer app-run-tests` after changes.
+- This package applies its own standard to itself: its `.editorconfig`, `.gitignore`, tool configs and both workflows are synced output, not hand-written. `CHANGELOG.md` is the exception — the standard ships the release mechanism, never the prose.
+- Validate with `composer app-checks` after changes: it runs the sync check, ECS, PHPStan, Psalm, Rector and the tests, which is exactly what a consumer runs.

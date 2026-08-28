@@ -11,9 +11,15 @@ A shared base is extracted once both tiers exist and the overlap is visible, rat
 
 ## What `PackageStandard` ships
 
-A managed `.editorconfig` block and a managed `.gitignore` block, distributed under the label `ortho-code`. On a repository's first sync each block is appended, keeping whatever the file already held; on later syncs only the inside of the block is rewritten, so everything outside it stays the repository's own.
+**Managed blocks**, distributed under the label `ortho-code`: `.editorconfig`, `.gitignore`, a `standards.yml` workflow running the checks on every push and pull request, and a tag-driven `release.yml` whose notes are the `CHANGELOG.md` section for that tag. On a repository's first sync each block is appended, keeping whatever the file already held; afterwards only the inside of the block is rewritten, so everything outside it stays the repository's own. The changelog itself is never synced — the standard ships the release mechanism, each repository writes its own prose.
 
-More families follow one at a time — the toolchain and its check script, phpunit, ECS, Rector, PHPStan, Psalm, Renovate.
+**Shared config, imported rather than copied**, so it rides `composer update`: the ECS fixer set (PER-CS 3.0 plus ECS's prepared sets, single quotes always), the Rector set, and the PHPStan ruleset. Each is registered as one entry in the consumer's own config, which the consumer otherwise owns.
+
+**Values a project cannot loosen.** PHPStan has a level floor of 6 and `treatPhpDocTypesAsCertain: false` rewritten on every sync. Psalm is seeded at `errorLevel="2"` with `findUnusedCode="false"`, and a looser level is tightened. PHPUnit is seeded and thirteen strictness flags are pinned, including the two PHPUnit already defaults to true, so the config states the whole contract rather than half of it. A seeded config is one-shot: it is written only where none exists and never edits an existing one — the template bootstraps, the pins converge.
+
+**Renovate** extends the shared preset in this repository (`renovate-package-preset.json`), reached as `local>ortho-code/coding-standards:renovate-package-preset`.
+
+**And the enforcement that makes it real**, since synced config enforces nothing on its own: the PHP version and every tool the standard configures are required in the consumer's `composer.json`, an `app-checks` script runs them all plus `standards-sync sync --check`, and the managed workflow calls that script. A repository that drifts fails its own CI rather than drifting quietly.
 
 ## Usage
 
@@ -23,15 +29,15 @@ Require the package as a dev dependency and keep a `standards-sync.php` at the r
 return SyncConfig::create()->withRuleSet(new PackageStandard());
 ```
 
-Then `vendor/bin/standards-sync sync` applies the standard, and `sync --check` reports drift without writing.
+Then `vendor/bin/standards-sync sync` applies the standard, and `sync --check` reports drift without writing. Both are available as `composer app-sync` and `composer app-sync-check` once the standard has been applied.
 
 ## Development
 
-Everything distributed lives under `templates/`, one subdirectory per tier; the configs this package lints *itself* with stay at its root, outside that directory. This package syncs itself — its own `.editorconfig` and `.gitignore` carry the same managed blocks a consumer gets.
+Everything distributed lives under `templates/`, one subdirectory per tier; the configs this package lints *itself* with stay at its root, outside that directory. This package applies its own standard to itself — its `.editorconfig`, `.gitignore`, workflows and tool configs are all synced output, so `composer app-checks` here runs exactly what a consumer runs.
 
-Tests: `composer app-run-tests`. They assert this package's contribution — the right content wired to the right file — not the engine's rendering, which the engine's own suite pins.
+Tests: `composer app-run-tests`. They assert this package's contribution — the right content wired to the right file — not the engine's rendering, which the engine's own suite pins. Where the standard states the same thing twice, the suite pins the pair: a shipped template's values against the rule that enforces them, and the workflow's call against the script name the standard declares.
 
-The engine resolves locally through a path repository (`../standards-sync`, symlinked). Authoring conventions are in [`docs/authoring.md`](docs/authoring.md); what the engine itself requires is in its own [authoring guide](https://github.com/ortho-code/standards-sync/blob/main/docs/authoring-org-packages.md).
+Authoring conventions are in [`docs/authoring.md`](docs/authoring.md); what the engine itself requires is in its own [authoring guide](https://github.com/ortho-code/standards-sync/blob/main/docs/authoring-org-packages.md).
 
 ## License
 
