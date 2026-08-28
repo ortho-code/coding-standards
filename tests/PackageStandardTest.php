@@ -11,6 +11,7 @@ use OrthoCode\StandardsSync\Core\Config\SyncConfig;
 use OrthoCode\StandardsSync\Core\Filesystem\Path;
 use OrthoCode\StandardsSync\Core\Rule\Rule;
 use OrthoCode\StandardsSync\Formats\Xml\XmlElementWriter;
+use OrthoCode\StandardsSync\Rules\PhpStan\MinLevel\PhpStanMinLevel;
 use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
 use OrthoCode\StandardsSync\Testing\FileContent;
 use OrthoCode\StandardsSync\Testing\SyncTester;
@@ -127,13 +128,50 @@ final class PackageStandardTest extends TestCase
         self::assertStringContainsString('__DIR__ . \'/vendor/ortho-code/coding-standards/templates/package/rector.php\'', $result['./rector.php']);
     }
 
+    public function testSyncingCreatesAPhpStanConfigImportingTheSharedRuleset(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./phpstan.neon', $result);
+        self::assertStringContainsString('vendor/ortho-code/coding-standards/templates/package/phpstan.neon', $result['./phpstan.neon']);
+    }
+
+    public function testSyncingRaisesAPhpStanLevelBelowTheFloorAndRewritesThePinnedValue(): void
+    {
+        $existing = FileContent::fromString(
+            <<<'NEON'
+                parameters:
+                	level: 2
+                	treatPhpDocTypesAsCertain: true
+                NEON,
+        );
+
+        $result = (new SyncTester())->sync($this->config(), [
+            './phpstan.neon' => $existing,
+        ]);
+
+        self::assertStringContainsString('level: 6', $result['./phpstan.neon']);
+        self::assertStringContainsString('treatPhpDocTypesAsCertain: false', $result['./phpstan.neon']);
+    }
+
+    // The shipped ruleset must carry the floor as its own level, or a repo riding the import lands looser than one with a written level.
+    public function testTheSharedRulesetCarriesTheFloorAsItsLevel(): void
+    {
+        $floor = array_find((new PackageStandard())->rules(), static fn(Rule $rule): bool => $rule instanceof PhpStanMinLevel);
+        self::assertInstanceOf(PhpStanMinLevel::class, $floor);
+
+        $ruleset = (string) file_get_contents(__DIR__ . '/../templates/package/phpstan.neon');
+
+        self::assertStringContainsString(sprintf('level: %d', $floor->minLevel()->value()), $ruleset);
+    }
+
     public function testSyncingRequiresTheToolsItConfigures(): void
     {
         $result = (new SyncTester())->sync($this->config(), [
             './composer.json' => '{"name": "acme/consumer"}',
         ]);
 
-        foreach (['phpunit/phpunit', 'rector/rector', 'symplify/easy-coding-standard'] as $tool) {
+        foreach (['phpstan/phpstan', 'phpunit/phpunit', 'rector/rector', 'symplify/easy-coding-standard'] as $tool) {
             self::assertStringContainsString($tool, $result['./composer.json'], sprintf('%s must be required, or its synced config enforces nothing.', $tool));
         }
     }

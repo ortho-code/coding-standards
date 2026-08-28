@@ -14,6 +14,11 @@ use OrthoCode\StandardsSync\Rules\Composer\Script\ComposerScript;
 use OrthoCode\StandardsSync\Rules\Ecs\BaseSet\EcsBaseSet;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\Label;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\ManagedBlock;
+use OrthoCode\StandardsSync\Rules\PhpStan\IncludedRuleset\PhpStanIncludedRuleset;
+use OrthoCode\StandardsSync\Rules\PhpStan\MinLevel\PhpStanLevel;
+use OrthoCode\StandardsSync\Rules\PhpStan\MinLevel\PhpStanMinLevel;
+use OrthoCode\StandardsSync\Rules\PhpStan\PinnedValues\PhpStanPinnedValues;
+use OrthoCode\StandardsSync\Rules\PhpStan\PinnedValues\PinnedValues;
 use OrthoCode\StandardsSync\Rules\PhpUnit\BaseConfig\PhpUnitBaseConfig;
 use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
 use OrthoCode\StandardsSync\Rules\Rector\BaseSet\RectorBaseSet;
@@ -30,6 +35,7 @@ final class PackageStandard extends Standard
         $this->enforcePhpUnit($package);
         $this->enforceEcs($package);
         $this->enforceRector($package);
+        $this->enforcePhpStan($package);
         $this->enforceToolchain();
     }
 
@@ -94,6 +100,21 @@ final class PackageStandard extends Standard
         $this->addRule(new ComposerScript(name: 'app-rector-fix', commands: ['rector process']));
     }
 
+    /** The shared ruleset via a native import, a level floor, and values no project may override — overridable defaults belong in the ruleset instead. */
+    private function enforcePhpStan(Package $package): void
+    {
+        // The import declares first: the first rule to meet an absent config decides the created base.
+        $this->addRule(new PhpStanIncludedRuleset(ruleset: $package->path('package/phpstan.neon')));
+        $this->addRule(new PhpStanMinLevel(minLevel: PhpStanLevel::fromInt(6)));
+        $this->addRule(new PhpStanPinnedValues(values: PinnedValues::fromArray([
+            'parameters' => [
+                'treatPhpDocTypesAsCertain' => false,
+            ],
+        ])));
+        $this->addRule(new ComposerRequirement(package: 'phpstan/phpstan', constraint: VersionConstraint::fromString('^2.2')));
+        $this->addRule(new ComposerScript(name: 'app-phpstan', commands: ['phpstan analyse']));
+    }
+
     /** Synced configs enforce nothing until something runs them: app-checks is the entry point developers and CI call by name, and every family added later appends to it. */
     private function enforceToolchain(): void
     {
@@ -101,6 +122,6 @@ final class PackageStandard extends Standard
         // Composer puts vendor/bin on PATH for scripts, so entries name the bare binary.
         $this->addRule(new ComposerScript(name: 'app-sync', commands: ['standards-sync sync']));
         $this->addRule(new ComposerScript(name: 'app-sync-check', commands: ['standards-sync sync --check']));
-        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-rector', '@app-run-tests']));
+        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-phpstan', '@app-rector', '@app-run-tests']));
     }
 }

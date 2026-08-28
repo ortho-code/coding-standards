@@ -1,0 +1,9 @@
+includes:
+	- templates/package/phpstan.neon
+
+parameters:
+	treatPhpDocTypesAsCertain: false
+	level: 6
+	paths:
+		- src
+		- tests

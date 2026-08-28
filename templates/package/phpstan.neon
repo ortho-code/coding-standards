@@ -1,0 +1,4 @@
+# The shared PHPStan ruleset: imported by the consumer's own config, which keeps its paths.
+parameters:
+  level: 6
+  treatPhpDocTypesAsCertain: false
