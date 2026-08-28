@@ -12,7 +12,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^12",
-    "symplify/easy-coding-standard": "^13.2"
+    "symplify/easy-coding-standard": "^13.2",
+    "rector/rector": "^2.5"
   },
   "config": {
     "optimize-autoloader": true,
@@ -44,6 +45,7 @@
     "app-checks": [
       "@app-sync-check",
       "@app-ecs",
+      "@app-rector",
       "@app-run-tests"
     ],
     "app-ecs": [
@@ -51,6 +53,12 @@
     ],
     "app-ecs-fix": [
       "ecs check --fix"
+    ],
+    "app-rector": [
+      "rector process --dry-run"
+    ],
+    "app-rector-fix": [
+      "rector process"
     ]
   }
 }

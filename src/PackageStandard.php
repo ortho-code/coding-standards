@@ -16,6 +16,7 @@ use OrthoCode\StandardsSync\Rules\General\ManagedBlock\Label;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\ManagedBlock;
 use OrthoCode\StandardsSync\Rules\PhpUnit\BaseConfig\PhpUnitBaseConfig;
 use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
+use OrthoCode\StandardsSync\Rules\Rector\BaseSet\RectorBaseSet;
 
 /** OrthoCode's standard for library packages; applications get their own tier. */
 final class PackageStandard extends Standard
@@ -28,6 +29,7 @@ final class PackageStandard extends Standard
         $this->enforceGitignore($package);
         $this->enforcePhpUnit($package);
         $this->enforceEcs($package);
+        $this->enforceRector($package);
         $this->enforceToolchain();
     }
 
@@ -83,6 +85,15 @@ final class PackageStandard extends Standard
         $this->addRule(new ComposerScript(name: 'app-ecs-fix', commands: ['ecs check --fix']));
     }
 
+    /** The shared refactoring set, wired as one entry in the consumer's own withSets() — the set itself rides composer update. */
+    private function enforceRector(Package $package): void
+    {
+        $this->addRule(new RectorBaseSet(set: $package->path('package/rector.php')));
+        $this->addRule(new ComposerRequirement(package: 'rector/rector', constraint: VersionConstraint::fromString('^2.5')));
+        $this->addRule(new ComposerScript(name: 'app-rector', commands: ['rector process --dry-run']));
+        $this->addRule(new ComposerScript(name: 'app-rector-fix', commands: ['rector process']));
+    }
+
     /** Synced configs enforce nothing until something runs them: app-checks is the entry point developers and CI call by name, and every family added later appends to it. */
     private function enforceToolchain(): void
     {
@@ -90,6 +101,6 @@ final class PackageStandard extends Standard
         // Composer puts vendor/bin on PATH for scripts, so entries name the bare binary.
         $this->addRule(new ComposerScript(name: 'app-sync', commands: ['standards-sync sync']));
         $this->addRule(new ComposerScript(name: 'app-sync-check', commands: ['standards-sync sync --check']));
-        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-run-tests']));
+        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-rector', '@app-run-tests']));
     }
 }

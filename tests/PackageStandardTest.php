@@ -61,10 +61,12 @@ final class PackageStandardTest extends TestCase
                         </testsuite>
                     </testsuites>
                 </phpunit>
-                XML
+                XML,
         );
 
-        $result = (new SyncTester())->sync($this->config(), ['./phpunit.xml' => $existing]);
+        $result = (new SyncTester())->sync($this->config(), [
+            './phpunit.xml' => $existing,
+        ]);
 
         self::assertStringContainsString('failOnRisky="true"', $result['./phpunit.xml']);
         // The template is one-shot: the project's own config survives, only the pins converge.
@@ -74,7 +76,7 @@ final class PackageStandardTest extends TestCase
     // The shipped template must carry every pinned flag at its pinned value, or a bootstrapped repo starts looser than a converged one.
     public function testTheShippedPhpUnitTemplateCarriesEveryPinnedFlag(): void
     {
-        $pins = array_find((new PackageStandard())->rules(), static fn (Rule $rule): bool => $rule instanceof PhpUnitPinnedAttributes);
+        $pins = array_find((new PackageStandard())->rules(), static fn(Rule $rule): bool => $rule instanceof PhpUnitPinnedAttributes);
         self::assertInstanceOf(PhpUnitPinnedAttributes::class, $pins);
 
         $template = (string) file_get_contents(__DIR__ . '/../templates/package/phpunit.xml');
@@ -106,27 +108,41 @@ final class PackageStandardTest extends TestCase
                     ->withPaths([
                         __DIR__ . '/src',
                     ]);
-                PHP
+                PHP,
         );
 
-        $result = (new SyncTester())->sync($this->config(), ['./ecs.php' => $existing]);
+        $result = (new SyncTester())->sync($this->config(), [
+            './ecs.php' => $existing,
+        ]);
 
         self::assertStringContainsString('__DIR__ . \'/vendor/ortho-code/coding-standards/templates/package/ecs.php\'', $result['./ecs.php']);
         self::assertStringContainsString('withPaths', $result['./ecs.php']);
     }
 
+    public function testSyncingCreatesARectorConfigRegisteringTheSharedSet(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./rector.php', $result);
+        self::assertStringContainsString('__DIR__ . \'/vendor/ortho-code/coding-standards/templates/package/rector.php\'', $result['./rector.php']);
+    }
+
     public function testSyncingRequiresTheToolsItConfigures(): void
     {
-        $result = (new SyncTester())->sync($this->config(), ['./composer.json' => '{"name": "acme/consumer"}']);
+        $result = (new SyncTester())->sync($this->config(), [
+            './composer.json' => '{"name": "acme/consumer"}',
+        ]);
 
-        foreach (['phpunit/phpunit', 'symplify/easy-coding-standard'] as $tool) {
+        foreach (['phpunit/phpunit', 'rector/rector', 'symplify/easy-coding-standard'] as $tool) {
             self::assertStringContainsString($tool, $result['./composer.json'], sprintf('%s must be required, or its synced config enforces nothing.', $tool));
         }
     }
 
     public function testSyncingDeclaresTheCheckScripts(): void
     {
-        $result = (new SyncTester())->sync($this->config(), ['./composer.json' => '{"name": "acme/consumer"}']);
+        $result = (new SyncTester())->sync($this->config(), [
+            './composer.json' => '{"name": "acme/consumer"}',
+        ]);
 
         self::assertArrayHasKey('./composer.json', $result);
         self::assertStringContainsString('app-checks', $result['./composer.json']);
@@ -135,7 +151,9 @@ final class PackageStandardTest extends TestCase
 
     public function testSyncingSetsTheManifestSettingsTheStandardOwns(): void
     {
-        $result = (new SyncTester())->sync($this->config(), ['./composer.json' => '{"name": "acme/consumer"}']);
+        $result = (new SyncTester())->sync($this->config(), [
+            './composer.json' => '{"name": "acme/consumer"}',
+        ]);
 
         self::assertStringContainsString('sort-packages', $result['./composer.json']);
     }
@@ -143,7 +161,9 @@ final class PackageStandardTest extends TestCase
     // Nothing ties an aggregate's "@name" reference to the script it calls, so a rename would leave it calling a script that no longer exists.
     public function testEveryScriptReferenceNamesADeclaredScript(): void
     {
-        $result = (new SyncTester())->sync($this->config(), ['./composer.json' => '{"name": "acme/consumer"}']);
+        $result = (new SyncTester())->sync($this->config(), [
+            './composer.json' => '{"name": "acme/consumer"}',
+        ]);
         $scripts = json_decode($result['./composer.json'], true, flags: JSON_THROW_ON_ERROR)['scripts'];
 
         foreach ($scripts as $name => $commands) {
