@@ -46,6 +46,7 @@ final class PackageStandard extends Standard
         $this->enforcePhpStan($package);
         $this->enforcePsalm($package);
         $this->enforceRenovate();
+        $this->enforceRelease($package);
         $this->enforceToolchain($package);
     }
 
@@ -143,6 +144,16 @@ final class PackageStandard extends Standard
             preset: 'local>ortho-code/coding-standards:renovate-package-preset',
             createAs: RenovateConfigFormat::Json5,
             comment: 'ortho-code coding standards; sync re-adds this entry',
+        ));
+    }
+
+    /** A tag-driven release whose notes are the CHANGELOG section for that tag. The changelog itself stays each repository's own prose — the standard ships the mechanism, not the content. */
+    private function enforceRelease(Package $package): void
+    {
+        $this->addRule(new ManagedBlock(
+            target: FileTarget::fromString('.github/workflows/release.yml'),
+            label: Label::fromString(self::LABEL),
+            content: $package->read('package/ci-release.yml'),
         ));
     }
 

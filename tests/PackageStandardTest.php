@@ -272,6 +272,16 @@ final class PackageStandardTest extends TestCase
         self::assertStringContainsString(sprintf('composer %s', $aggregate->name()), $result['./.github/workflows/standards.yml']);
     }
 
+    public function testSyncingDropsTheManagedReleaseWorkflowBlock(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./.github/workflows/release.yml', $result);
+        self::assertStringContainsString('ortho-code', $result['./.github/workflows/release.yml']);
+        // The notes are the changelog section for the tag, so the workflow must read that file.
+        self::assertStringContainsString('CHANGELOG.md', $result['./.github/workflows/release.yml']);
+    }
+
     public function testSyncingRequiresThePhpVersionTheWorkflowRuns(): void
     {
         $result = (new SyncTester())->sync($this->config(), [
