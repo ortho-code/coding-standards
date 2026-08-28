@@ -13,6 +13,8 @@ use OrthoCode\StandardsSync\Core\Rule\Rule;
 use OrthoCode\StandardsSync\Formats\Xml\XmlElementWriter;
 use OrthoCode\StandardsSync\Rules\PhpStan\MinLevel\PhpStanMinLevel;
 use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
+use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmErrorLevel;
+use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmLoosestErrorLevel;
 use OrthoCode\StandardsSync\Testing\FileContent;
 use OrthoCode\StandardsSync\Testing\SyncTester;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -165,13 +167,57 @@ final class PackageStandardTest extends TestCase
         self::assertStringContainsString(sprintf('level: %d', $floor->minLevel()->value()), $ruleset);
     }
 
+    public function testSyncingCreatesAPsalmConfigFromTheTemplate(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./psalm.xml', $result);
+        // psalm defaults findUnusedCode to true, which flags a library's whole public API; the template turns it off.
+        self::assertStringContainsString('findUnusedCode="false"', $result['./psalm.xml']);
+    }
+
+    public function testSyncingTightensALooserPsalmErrorLevelWithoutReseeding(): void
+    {
+        $existing = FileContent::fromString(
+            <<<'XML'
+                <?xml version="1.0"?>
+                <psalm errorLevel="8">
+                    <projectFiles>
+                        <directory name="app" />
+                    </projectFiles>
+                </psalm>
+                XML,
+        );
+
+        $result = (new SyncTester())->sync($this->config(), [
+            './psalm.xml' => $existing,
+        ]);
+
+        self::assertStringContainsString('errorLevel="2"', $result['./psalm.xml']);
+        // The template is one-shot: the project's own config survives, only the level converges.
+        self::assertStringContainsString('<directory name="app" />', $result['./psalm.xml']);
+    }
+
+    // The shipped template must carry a level at or stricter than the declared limit, or a bootstrapped repo starts looser than the standard allows.
+    public function testTheShippedPsalmTemplateCarriesALevelAtOrStricterThanTheLimit(): void
+    {
+        $limit = array_find((new PackageStandard())->rules(), static fn(Rule $rule): bool => $rule instanceof PsalmLoosestErrorLevel);
+        self::assertInstanceOf(PsalmLoosestErrorLevel::class, $limit);
+
+        $template = (string) file_get_contents(__DIR__ . '/../templates/package/psalm.xml');
+        $written = XmlElementWriter::readAttribute($template, 'psalm', 'errorLevel');
+
+        self::assertNotNull($written, 'The template must write its errorLevel explicitly.');
+        self::assertTrue(PsalmErrorLevel::fromConfigValue($written)->isAtMost($limit->loosest()));
+    }
+
     public function testSyncingRequiresTheToolsItConfigures(): void
     {
         $result = (new SyncTester())->sync($this->config(), [
             './composer.json' => '{"name": "acme/consumer"}',
         ]);
 
-        foreach (['phpstan/phpstan', 'phpunit/phpunit', 'rector/rector', 'symplify/easy-coding-standard'] as $tool) {
+        foreach (['phpstan/phpstan', 'phpunit/phpunit', 'rector/rector', 'symplify/easy-coding-standard', 'vimeo/psalm'] as $tool) {
             self::assertStringContainsString($tool, $result['./composer.json'], sprintf('%s must be required, or its synced config enforces nothing.', $tool));
         }
     }

@@ -21,13 +21,18 @@ use OrthoCode\StandardsSync\Rules\PhpStan\PinnedValues\PhpStanPinnedValues;
 use OrthoCode\StandardsSync\Rules\PhpStan\PinnedValues\PinnedValues;
 use OrthoCode\StandardsSync\Rules\PhpUnit\BaseConfig\PhpUnitBaseConfig;
 use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
+use OrthoCode\StandardsSync\Rules\Psalm\BaseConfig\PsalmBaseConfig;
+use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmErrorLevel;
+use OrthoCode\StandardsSync\Rules\Psalm\LoosestErrorLevel\PsalmLoosestErrorLevel;
 use OrthoCode\StandardsSync\Rules\Rector\BaseSet\RectorBaseSet;
+use Override;
 
 /** OrthoCode's standard for library packages; applications get their own tier. */
 final class PackageStandard extends Standard
 {
     private const string LABEL = 'ortho-code';
 
+    #[Override]
     protected function enforce(Package $package): void
     {
         $this->enforceEditorConfig($package);
@@ -36,6 +41,7 @@ final class PackageStandard extends Standard
         $this->enforceEcs($package);
         $this->enforceRector($package);
         $this->enforcePhpStan($package);
+        $this->enforcePsalm($package);
         $this->enforceToolchain();
     }
 
@@ -115,6 +121,17 @@ final class PackageStandard extends Standard
         $this->addRule(new ComposerScript(name: 'app-phpstan', commands: ['phpstan analyse']));
     }
 
+    /** A seeded psalm.xml with an error-level limit — numerically a ceiling, since psalm's scale is inverted, semantically the strictness floor. */
+    private function enforcePsalm(Package $package): void
+    {
+        // The template declares first: psalm has no import tier, so an absent config grows from it rather than the engine skeleton.
+        // It also turns findUnusedCode off, which psalm defaults to on: a library's public API is uncalled from inside by design.
+        $this->addRule(new PsalmBaseConfig(config: $package->read('package/psalm.xml')));
+        $this->addRule(new PsalmLoosestErrorLevel(loosest: PsalmErrorLevel::fromInt(2)));
+        $this->addRule(new ComposerRequirement(package: 'vimeo/psalm', constraint: VersionConstraint::fromString('^6')));
+        $this->addRule(new ComposerScript(name: 'app-psalm', commands: ['psalm']));
+    }
+
     /** Synced configs enforce nothing until something runs them: app-checks is the entry point developers and CI call by name, and every family added later appends to it. */
     private function enforceToolchain(): void
     {
@@ -122,6 +139,6 @@ final class PackageStandard extends Standard
         // Composer puts vendor/bin on PATH for scripts, so entries name the bare binary.
         $this->addRule(new ComposerScript(name: 'app-sync', commands: ['standards-sync sync']));
         $this->addRule(new ComposerScript(name: 'app-sync-check', commands: ['standards-sync sync --check']));
-        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-phpstan', '@app-rector', '@app-run-tests']));
+        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-phpstan', '@app-psalm', '@app-rector', '@app-run-tests']));
     }
 }
