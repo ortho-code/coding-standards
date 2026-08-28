@@ -1,0 +1,38 @@
+{
+  "name": "ortho-code/coding-standards",
+  "description": "OrthoCode's coding standards, distributed with standards-sync",
+  "type": "library",
+  "keywords": ["coding-standards", "code-quality", "config-sync", "standards"],
+  "license": "MIT",
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "require": {
+    "php": "^8.5",
+    "ortho-code/standards-sync": "^0.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^12"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": {
+      "*": "dist"
+    },
+    "sort-packages": true
+  },
+  "autoload": {
+    "psr-4": {
+      "OrthoCode\\CodingStandards\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\OrthoCode\\CodingStandards\\": "tests/"
+    }
+  },
+  "scripts": {
+    "app-run-tests": [
+      "vendor/bin/phpunit"
+    ]
+  }
+}
