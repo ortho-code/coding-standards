@@ -32,7 +32,7 @@
   },
   "scripts": {
     "app-run-tests": [
-      "vendor/bin/phpunit"
+      "phpunit"
     ],
     "app-sync": [
       "standards-sync sync"
@@ -41,7 +41,8 @@
       "standards-sync sync --check"
     ],
     "app-checks": [
-      "@app-sync-check"
+      "@app-sync-check",
+      "@app-run-tests"
     ]
   }
 }

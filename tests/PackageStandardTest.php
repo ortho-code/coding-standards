@@ -8,6 +8,10 @@ use OrthoCode\CodingStandards\PackageStandard;
 use OrthoCode\StandardsSync\Core\Config\ConfigLoader;
 use OrthoCode\StandardsSync\Core\Config\SyncConfig;
 use OrthoCode\StandardsSync\Core\Filesystem\Path;
+use OrthoCode\StandardsSync\Core\Rule\Rule;
+use OrthoCode\StandardsSync\Formats\Xml\XmlElementWriter;
+use OrthoCode\StandardsSync\Rules\PhpUnit\PinnedAttributes\PhpUnitPinnedAttributes;
+use OrthoCode\StandardsSync\Testing\FileContent;
 use OrthoCode\StandardsSync\Testing\SyncTester;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +36,58 @@ final class PackageStandardTest extends TestCase
         self::assertArrayHasKey('./.gitignore', $result);
         self::assertStringContainsString('ortho-code', $result['./.gitignore']);
         self::assertStringContainsString('/vendor/', $result['./.gitignore']);
+    }
+
+    public function testSyncingCreatesAPhpUnitConfigFromTheTemplate(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./phpunit.xml', $result);
+        // An org-only value proves the template landed rather than the engine skeleton.
+        self::assertStringContainsString('cacheDirectory=".phpunit.cache"', $result['./phpunit.xml']);
+        self::assertStringContainsString('ignoreIndirectDeprecations="true"', $result['./phpunit.xml']);
+    }
+
+    public function testSyncingRewritesAPinnedFlagTheProjectTurnedOff(): void
+    {
+        $existing = FileContent::fromString(
+            <<<'XML'
+                <?xml version="1.0" encoding="UTF-8"?>
+                <phpunit bootstrap="tests/bootstrap.php" failOnRisky="false">
+                    <testsuites>
+                        <testsuite name="app">
+                            <directory>tests/App</directory>
+                        </testsuite>
+                    </testsuites>
+                </phpunit>
+                XML
+        );
+
+        $result = (new SyncTester())->sync($this->config(), ['./phpunit.xml' => $existing]);
+
+        self::assertStringContainsString('failOnRisky="true"', $result['./phpunit.xml']);
+        // The template is one-shot: the project's own config survives, only the pins converge.
+        self::assertStringContainsString('<directory>tests/App</directory>', $result['./phpunit.xml']);
+    }
+
+    // The shipped template must carry every pinned flag at its pinned value, or a bootstrapped repo starts looser than a converged one.
+    public function testTheShippedPhpUnitTemplateCarriesEveryPinnedFlag(): void
+    {
+        $pins = array_find((new PackageStandard())->rules(), static fn (Rule $rule): bool => $rule instanceof PhpUnitPinnedAttributes);
+        self::assertInstanceOf(PhpUnitPinnedAttributes::class, $pins);
+
+        $template = (string) file_get_contents(__DIR__ . '/../templates/package/phpunit.xml');
+
+        foreach ($pins->pinnedAttributes() as $pin) {
+            self::assertSame($pin->value(), XmlElementWriter::readAttribute($template, 'phpunit', $pin->name()), sprintf('The template must carry %s at its pinned value.', $pin->name()));
+        }
+    }
+
+    public function testSyncingRequiresTheToolsItConfigures(): void
+    {
+        $result = (new SyncTester())->sync($this->config(), ['./composer.json' => '{"name": "acme/consumer"}']);
+
+        self::assertStringContainsString('phpunit/phpunit', $result['./composer.json']);
     }
 
     public function testSyncingDeclaresTheCheckScripts(): void
