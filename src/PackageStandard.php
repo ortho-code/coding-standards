@@ -11,6 +11,7 @@ use OrthoCode\StandardsSync\Rules\Composer\ConfigSetting\ComposerConfigSetting;
 use OrthoCode\StandardsSync\Rules\Composer\Requirement\ComposerRequirement;
 use OrthoCode\StandardsSync\Rules\Composer\Requirement\VersionConstraint;
 use OrthoCode\StandardsSync\Rules\Composer\Script\ComposerScript;
+use OrthoCode\StandardsSync\Rules\Ecs\BaseSet\EcsBaseSet;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\Label;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\ManagedBlock;
 use OrthoCode\StandardsSync\Rules\PhpUnit\BaseConfig\PhpUnitBaseConfig;
@@ -26,6 +27,7 @@ final class PackageStandard extends Standard
         $this->enforceEditorConfig($package);
         $this->enforceGitignore($package);
         $this->enforcePhpUnit($package);
+        $this->enforceEcs($package);
         $this->enforceToolchain();
     }
 
@@ -72,6 +74,15 @@ final class PackageStandard extends Standard
         $this->addRule(new ComposerScript(name: 'app-run-tests', commands: ['phpunit']));
     }
 
+    /** The shared fixer set, wired as one entry in the consumer's own withSets() — the set itself rides composer update. */
+    private function enforceEcs(Package $package): void
+    {
+        $this->addRule(new EcsBaseSet(set: $package->path('package/ecs.php')));
+        $this->addRule(new ComposerRequirement(package: 'symplify/easy-coding-standard', constraint: VersionConstraint::fromString('^13.2')));
+        $this->addRule(new ComposerScript(name: 'app-ecs', commands: ['ecs check']));
+        $this->addRule(new ComposerScript(name: 'app-ecs-fix', commands: ['ecs check --fix']));
+    }
+
     /** Synced configs enforce nothing until something runs them: app-checks is the entry point developers and CI call by name, and every family added later appends to it. */
     private function enforceToolchain(): void
     {
@@ -79,6 +90,6 @@ final class PackageStandard extends Standard
         // Composer puts vendor/bin on PATH for scripts, so entries name the bare binary.
         $this->addRule(new ComposerScript(name: 'app-sync', commands: ['standards-sync sync']));
         $this->addRule(new ComposerScript(name: 'app-sync-check', commands: ['standards-sync sync --check']));
-        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-run-tests']));
+        $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-run-tests']));
     }
 }

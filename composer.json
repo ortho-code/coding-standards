@@ -11,7 +11,8 @@
     "ortho-code/standards-sync": "^0.1"
   },
   "require-dev": {
-    "phpunit/phpunit": "^12"
+    "phpunit/phpunit": "^12",
+    "symplify/easy-coding-standard": "^13.2"
   },
   "config": {
     "optimize-autoloader": true,
@@ -42,7 +43,14 @@
     ],
     "app-checks": [
       "@app-sync-check",
+      "@app-ecs",
       "@app-run-tests"
+    ],
+    "app-ecs": [
+      "ecs check"
+    ],
+    "app-ecs-fix": [
+      "ecs check --fix"
     ]
   }
 }

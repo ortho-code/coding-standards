@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\OrthoCode\CodingStandards;
 
 use OrthoCode\CodingStandards\PackageStandard;
+use OrthoCode\StandardsSync\Authoring\Package;
 use OrthoCode\StandardsSync\Core\Config\ConfigLoader;
 use OrthoCode\StandardsSync\Core\Config\SyncConfig;
 use OrthoCode\StandardsSync\Core\Filesystem\Path;
@@ -83,11 +84,44 @@ final class PackageStandardTest extends TestCase
         }
     }
 
+    public function testSyncingCreatesAnEcsConfigRegisteringTheSharedSet(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./ecs.php', $result);
+        self::assertStringContainsString('__DIR__ . \'/vendor/ortho-code/coding-standards/templates/package/ecs.php\'', $result['./ecs.php']);
+    }
+
+    public function testSyncingAddsTheSharedSetToAnExistingEcsConfig(): void
+    {
+        $existing = FileContent::fromString(
+            <<<'PHP'
+                <?php
+
+                declare(strict_types=1);
+
+                use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+                return ECSConfig::configure()
+                    ->withPaths([
+                        __DIR__ . '/src',
+                    ]);
+                PHP
+        );
+
+        $result = (new SyncTester())->sync($this->config(), ['./ecs.php' => $existing]);
+
+        self::assertStringContainsString('__DIR__ . \'/vendor/ortho-code/coding-standards/templates/package/ecs.php\'', $result['./ecs.php']);
+        self::assertStringContainsString('withPaths', $result['./ecs.php']);
+    }
+
     public function testSyncingRequiresTheToolsItConfigures(): void
     {
         $result = (new SyncTester())->sync($this->config(), ['./composer.json' => '{"name": "acme/consumer"}']);
 
-        self::assertStringContainsString('phpunit/phpunit', $result['./composer.json']);
+        foreach (['phpunit/phpunit', 'symplify/easy-coding-standard'] as $tool) {
+            self::assertStringContainsString($tool, $result['./composer.json'], sprintf('%s must be required, or its synced config enforces nothing.', $tool));
+        }
     }
 
     public function testSyncingDeclaresTheCheckScripts(): void
@@ -133,6 +167,12 @@ final class PackageStandardTest extends TestCase
 
     private function config(): SyncConfig
     {
-        return SyncConfig::create()->withRuleSet(new PackageStandard());
+        return SyncConfig::create()->withRuleSet(new PackageStandard($this->package()));
+    }
+
+    // In this repo the package is composer's root, so references would render bare; consumers see the vendor path.
+    private function package(): Package
+    {
+        return new Package(dirname(__DIR__), 'vendor/ortho-code/coding-standards');
     }
 }
