@@ -15,7 +15,8 @@
     "symplify/easy-coding-standard": "^13.2",
     "rector/rector": "^2.5",
     "phpstan/phpstan": "^2.2",
-    "vimeo/psalm": "^6"
+    "vimeo/psalm": "^6",
+    "roave/security-advisories": "dev-latest"
   },
   "config": {
     "optimize-autoloader": true,

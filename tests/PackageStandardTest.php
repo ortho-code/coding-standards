@@ -302,6 +302,16 @@ final class PackageStandardTest extends TestCase
         }
     }
 
+    /** Not a tool the standard configures but a guard it requires: the package has no releases, so the branch it names is pinned rather than floored. */
+    public function testSyncingRequiresTheSecurityAdvisoriesGuard(): void
+    {
+        $result = (new SyncTester())->sync($this->config(), [
+            './composer.json' => '{"name": "acme/consumer"}',
+        ]);
+
+        self::assertStringContainsString('"roave/security-advisories": "dev-latest"', $result['./composer.json']);
+    }
+
     public function testSyncingDeclaresTheCheckScripts(): void
     {
         $result = (new SyncTester())->sync($this->config(), [

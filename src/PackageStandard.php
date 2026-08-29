@@ -162,6 +162,8 @@ final class PackageStandard extends Standard
     {
         // The runtime floor the shipped workflow's php-version assumes; raise the two together.
         $this->addRule(new ComposerRequirement(package: 'php', constraint: VersionConstraint::fromString('^8.5'), type: RequirementType::Runtime));
+        // A conflicts-only package with no releases to floor: the branch is pinned, and an explicit dev constraint needs no stability flag of its own.
+        $this->addRule(new ComposerRequirement(package: 'roave/security-advisories', constraint: VersionConstraint::fromString('dev-latest')));
         $this->addRule(new ComposerConfigSetting(setting: 'sort-packages', value: true));
         // Composer puts vendor/bin on PATH for scripts, so entries name the bare binary.
         $this->addRule(new ComposerScript(name: 'app-sync', commands: ['standards-sync sync']));
