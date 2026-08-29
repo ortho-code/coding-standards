@@ -37,7 +37,7 @@ Everything distributed lives under `templates/`, one subdirectory per tier; the 
 
 Tests: `composer app-run-tests`. They assert this package's contribution — the right content wired to the right file — not the engine's rendering, which the engine's own suite pins. Where the standard states the same thing twice, the suite pins the pair: a shipped template's values against the rule that enforces them, and the workflow's call against the script name the standard declares.
 
-Authoring conventions are in [`docs/authoring.md`](docs/authoring.md); what the engine itself requires is in its own [authoring guide](https://github.com/ortho-code/standards-sync/blob/main/docs/authoring-org-packages.md).
+Authoring conventions are in [`docs/authoring.md`](docs/authoring.md), the reasoning behind what the standard ships in [`docs/decisions.md`](docs/decisions.md), and what is still open in [`docs/roadmap.md`](docs/roadmap.md); what the engine itself requires is in its own [authoring guide](https://github.com/ortho-code/standards-sync/blob/main/docs/authoring-org-packages.md).
 
 ## License
 

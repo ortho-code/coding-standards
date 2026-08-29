@@ -10,6 +10,8 @@ Keep this file project-facing (no personal workflow prefs).
 
 - [README.md](README.md) — what the package is and ships, usage, development notes.
 - [docs/authoring.md](docs/authoring.md) — how we author the standards here: class placement, structuring by tool family, values inline, what we test.
+- [docs/decisions.md](docs/decisions.md) — why the standard is shaped this way, with what each decision rejected and the numbers it was measured against. **Read it before changing a shipped value; propose and get agreement before reversing a recorded decision.**
+- [docs/roadmap.md](docs/roadmap.md) — what is still open, each item with its trigger.
 - The engine's own docs, for what the engine requires rather than what we chose: `docs/authoring-org-packages.md` and `docs/conventions.md` in `ortho-code/standards-sync`.
 
 ## Working rules
