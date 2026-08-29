@@ -190,3 +190,98 @@ Two Psalm findings were real rather than notational, which is the argument for t
 One fact surfaced that no measurement predicted: **a package that ships a tool must link its own binary.**
 Composer's bin directory holds *dependencies'* binaries and never the root package's own, so a repository that ships the very tool the standard's `sync --check` script calls cannot find it by name.
 A `post-install-cmd` linking the binary fixes it, and the engine's authoring guide records the general form.
+
+## Agreed 2026-08-29 — the application tier
+
+`ProjectStandard` was designed against a real application rather than in the abstract, and every number below was measured against that consumer's source with the tools' target versions, in a throwaway harness that never modified it.
+The consumer is an existing Symfony application on Bitbucket; it is not named here, since this repository is published and that one is not.
+
+### Declared at what a consumer can pass today, with the ratchet recorded
+
+The package tier was measured and then declared near the strict end, because its consumer was already there.
+The application tier is declared at **what its first consumer can pass now**, and every gap to where the standard is heading is written into the [roadmap](roadmap.md) as a ratchet with its measured cost.
+The reasoning is that a tier nothing can adopt enforces nothing: the application needs a dependency upgrade before it can reach the package tier's values, and a standard that waits for that upgrade is a standard with no consumer for months.
+
+*Rejected*: declaring the package tier's values and letting the application fail every check until it catches up — indistinguishable, day to day, from having no standard.
+*Rejected*: a committed baseline to bridge the gap, which the [2026-08-28 entry](#measure-first-then-declare-never-a-committed-baseline) already refuses for the same reasons.
+
+### CI is a forge companion, not part of the tier
+
+`ProjectStandard` carries no CI. `ProjectGitHubStandard` and `ProjectBitbucketStandard` each carry exactly one managed block, and a consumer declares one of them beside the tier.
+
+This is forced rather than chosen. **The engine ships no rule that enforces a file's absence** — nothing in `src/Rules` deletes, and its own history records the removal case as never exercised — so a tier that shipped `.github/workflows/standards.yml` would hand a Bitbucket application a workflow it could neither run nor refuse.
+Composition is the engine's `SyncConfig::withRuleSet()`, which is additive and folds every rule set's rules in declaration order.
+
+*Rejected*: a `forge:` constructor parameter on the tier — one composition point, but the tier grows conditionals and a subclass adding parameters must still thread `?Package` through `Standard::__construct`.
+*Rejected*: naming the companions forge-first (`GitHubProjectStandard`) — tier-first sorts the tiers together and makes a mismatched pair visible in the consumer's own config, which is the only place the mistake can be caught: nothing detects `ProjectStandard` declared beside a *package* forge companion.
+
+⚠ The composition is real but untested territory: across the whole engine suite and its generated docs there are 86 `withRuleSet` call sites and **not one** chains two. It is supported by construction, not by a scenario.
+
+### The measured cost, and what it bought
+
+Against the consumer's `bin`, `config`, `public`, `src` and `tests`, with its own suppressions and exclusions removed so nothing hid:
+
+| Tool | Finding |
+|---|---|
+| ECS, the package tier's shared set | 50 files, every finding auto-fixable |
+| Rector, the package tier's shared set | 6 files — 5 of them only `declare(strict_types=1)` on framework bootstrap files |
+| PHPStan | **6 errors, identical at levels 6, 8 and 9** |
+| Psalm, errorLevel 2 | 147 across 40 files |
+| Psalm, errorLevel 6 or 8 | **31, all `MissingOverrideAttribute`** |
+
+PHPStan's six were *already* the consumer's own suppressions and exclusions, so adopting the analyser at any level up to 9 costs nothing there.
+That is why the floor is 9 — but the evidence is circular and worth flagging: the application clears level 9 because it already runs level 9, and one such data point cannot say what the tier should demand of the next application.
+
+### PHPUnit: eight flags, and a template written for two schemas
+
+The tier requires `^9.6` and pins eight of the thirteen strictness flags the package tier pins.
+The other five — `failOnDeprecation`, `failOnNotice`, `failOnPhpunitDeprecation`, `failOnPhpunitNotice`, `failOnPhpunitWarning` — **do not exist in the 9.6 schema** (read from its shipped `phpunit.xsd`), and pinning an attribute the schema lacks makes PHPUnit's own config validation complain.
+
+The seeded template contains only elements valid in **both** PHPUnit 9 and 12: no `cacheDirectory`, no `<source>`, no `<coverage>`.
+It therefore survives the version ratchet instead of being replaced by it, which is the point — a one-shot seed is never edited again once a consumer has one.
+
+### Psalm is not shipped, and `findUnusedCode` is reversed
+
+The application does not use Psalm, and the tier does not add it. The measured floor it could adopt — errorLevel 6, reachable with a single `psalm --alter --issues=MissingOverrideAttribute` sweep — is recorded in the roadmap so the cost is known when it is picked up.
+
+More importantly, this **supersedes the `findUnusedCode` reasoning in the [2026-08-28 entry](#split-by-consumer-kind-in-one-composer-package)**, which made it the headline example of why the tiers split: right for an application, noise for a library.
+Measured, that is wrong. Turning it on adds 60 findings, and **all 20 `UnusedClass` entries are framework- or test-runner-instantiated** — 10 test classes, 5 controllers, 3 template extensions, 1 event subscriber, 1 constraint validator. Not one is real dead code.
+The library rationale — public API uncalled from inside — has an exact analogue in a dependency-injected application, where the container is the caller Psalm cannot see.
+It could only be turned on together with a framework-aware plugin, which belongs to a framework standard rather than to a tier.
+
+The tier split still earns its keep; the lock file, the PHP floor, the analyser set and the CI shape all differ. It is only this one example that did not survive contact with a real application.
+
+### ECS is not shipped either, and the fixer families are the reason
+
+The application uses `php-cs-fixer` plus `phpcs` with about fifty-five `slevomat` sniffs, and ECS runs both — so the migration is possible, but it is a migration.
+Adhering to what the consumer has means requiring those two tools and declaring their `app-*` entry points, while **their rule sets stay each repository's own**: nothing in the engine can carry a shared `php-cs-fixer` or `phpcs` ruleset, and those are two new rule families.
+
+The honest limit of that: a tool required and run with no shared configuration is enforcement-shaped without enforcing anything shared. It is a step, recorded as one.
+
+### `armin/editorconfig-cli` needs no config file, measured
+
+The consumer runs `ec` through a Symfony Finder config. It does not need one: `ec -e vendor -e node_modules -e var` produces byte-identical output to that finder config, because `-e` matches a directory *name* at any depth.
+
+Bare `ec` is **not** equivalent — it reports 4 issues under a compiled asset tree, because `ec` excludes what `.gitignore` excludes and that tree is committed. So the excludes are load-bearing, and they fit in the script.
+The family is therefore a requirement plus two scripts, with no template and no new engine rule.
+
+### `app-outdated` is declared, and deliberately not aggregated
+
+The [2026-08-28 entry](#toolchain-shape-one-script-per-tool-plus-an-aggregate) rejected `composer outdated --strict` *among the checks*, because it fails on other people's release cadence.
+That rejection is about the aggregate, not the command: the tier declares `app-outdated` as a standalone script a developer can run, and keeps it out of `app-checks`.
+An extended aggregate that includes it is left for when a second such script exists.
+
+### `roave/security-advisories` is settled in both tiers
+
+Recorded here because the roadmap carried it as open long after it stopped being so.
+It was originally dropped because `ComposerRequirement` refused a branch constraint and that package publishes only `dev-master` and `dev-latest`; the engine removed that refusal on 2026-08-29, pinning a constraint that names only a branch, since branches have no ordering to floor.
+Both tiers declare it at `dev-latest`, and an explicit dev constraint needs no stability flag of its own.
+
+### The first collision between two standards, and it is silent
+
+`ComposerScript::apply()` writes the named script's command list, replacing it.
+Two rule sets declaring the same script name therefore do **not** merge: declaration order decides, the later one wins wholesale, the earlier one's commands vanish, and nothing detects or reports it.
+
+The engine's designed answer is in that rule's own docblock — a project needing extra steps declares its own script and calls the owned one by `@name`. That works for a *project*. It does not work for a *standard*: a framework standard wanting one more step in `app-checks` cannot rename the entry point every consumer's CI calls.
+
+The engine records the same shape for managed blocks, with directions and a trigger. It does not record the composer-script form, nor the two-standards-one-name case. Both belong in the engine's roadmap, and a framework standard is their trigger.

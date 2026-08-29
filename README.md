@@ -5,9 +5,17 @@ OrthoCode's coding standards, built on the [`ortho-code/standards-sync`](https:/
 The standard splits by consumer kind, because a library and an application genuinely want different things — psalm's `findUnusedCode` is right for an application and noise for a library whose public API is uncalled by design.
 
 - **`PackageStandard`** — for library packages.
-- **`ProjectStandard`** — for applications. Not built yet.
+- **`ProjectStandard`** — for applications.
 
-A shared base is extracted once both tiers exist and the overlap is visible, rather than designed up front.
+A shared base is extracted once the overlap between them is visible, rather than designed up front.
+
+CI is not part of either tier. It lives in a **forge companion** a consumer declares beside the tier — `ProjectGitHubStandard` or `ProjectBitbucketStandard` — because a tier that shipped one forge's CI could not be adopted on another: nothing in the engine enforces a file's *absence*, so the wrong workflow would arrive and could not be refused.
+
+```php
+return SyncConfig::create()
+    ->withRuleSet(new ProjectStandard())
+    ->withRuleSet(new ProjectBitbucketStandard());
+```
 
 ## What `PackageStandard` ships
 
@@ -20,6 +28,20 @@ A shared base is extracted once both tiers exist and the overlap is visible, rat
 **Renovate** extends the shared preset in this repository (`renovate-package-preset.json`), reached as `local>ortho-code/coding-standards:renovate-package-preset`.
 
 **And the enforcement that makes it real**, since synced config enforces nothing on its own: the PHP version and every tool the standard configures are required in the consumer's `composer.json`, an `app-checks` script runs them all plus `standards-sync sync --check`, and the managed workflow calls that script. A repository that drifts fails its own CI rather than drifting quietly.
+
+## What `ProjectStandard` ships
+
+The same shape as the package tier, with its values set to **what an application can pass today** rather than where the standard is heading; every one of them has a ratchet in [`docs/roadmap.md`](docs/roadmap.md).
+
+**Managed blocks** for `.editorconfig` and `.gitignore` — the same editor settings as the package tier, and the same ignore list minus `composer.lock`, which an application commits.
+
+**Values a project cannot loosen.** PHPStan has a level floor of 9 with `treatPhpDocTypesAsCertain: false`; PHPUnit is seeded and eight strictness flags are pinned, the eight that exist in the PHPUnit version the tier requires. Rector's shared set is imported and targets the tier's own PHP floor, never a version ahead of it.
+
+**Tools whose rule sets are still each repository's own**: `php-cs-fixer` and `phpcs` with `slevomat/coding-standard` are required and given `app-*` entry points, but no shared ruleset — the engine has no rule family that can carry one yet. `armin/editorconfig-cli` makes the synced `.editorconfig` enforced rather than advisory, configured entirely through its script's exclude flags.
+
+**Not shipped, deliberately**: Psalm and ECS. Both are on the roadmap with the measured cost of adopting them.
+
+**And the enforcement that makes it real**: an `app-checks` script that runs the sync check and every tool, which the forge companion's CI calls by name. `app-outdated` is declared but stays *outside* `app-checks`, so CI never fails on someone else's release cadence.
 
 ## Usage
 

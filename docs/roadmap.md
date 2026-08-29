@@ -8,6 +8,9 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 - **`armin/editorconfig-cli`, the family that makes the synced `.editorconfig` enforced rather than advisory.**
   Researched 2026-08-29 and **deferred on priority, not on doubt**: the design below is settled and measured, and the work is a normal family tranche whenever it is picked up.
 
+  **The application tier ships it since 2026-08-29**, so what is left here is the package tier and the `.editorconfig` template change the numbers below argue for.
+  One finding from that tranche belongs to both: the family needs **no finder-config file**, because `ec -e vendor -e node_modules -e var` matches a directory name at any depth and reproduces a Symfony Finder config byte for byte. Bare `ec` is not equivalent — it reports issues under a committed compiled-asset tree, since `ec` excludes only what `.gitignore` excludes.
+
   *Measured against the first consumer's 449 tracked files, with `ec` 2.2.1.*
 
   | Configuration | Issues / files |
@@ -37,11 +40,37 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 
   *Adoption cost for the first consumer, applied and inspected*: six auto-fixed changes — one trailing blank line removed from each of five history documents, and a final newline added to `docker-compose.yml`.
 
-- **`ProjectStandard`, then the extraction of `OrthoCodeStandard`.**
-  The package tier is real, so the second tier is now buildable, and the shared base is extracted from the two rather than designed ahead of them.
-  Known differences to carry: the project tier commits `composer.lock`, wants Psalm's `findUnusedCode` on, and may take a different view of Rector's `PRIVATIZATION` set — all three are recorded in the decision record as library-specific choices rather than general ones.
-  An existing application is the archetype to port: it uses php-cs-fixer plus PHPCS sniffs rather than ECS, and the tier should move those rule sets through ECS, which runs both — without that, a project tier would need two new engine rule families.
-  Two items below unblock as soon as this lands.
+- **The application tier's ratchets.**
+  `ProjectStandard` ships declared at what its first consumer can pass today; each gap below is a tranche, and each is blocked on that consumer's dependency upgrade rather than on any decision.
+  The upgrade is the trigger for all four, and it is needed for its own sake: that application's installed toolchain does not run on current PHP at all — `php-cs-fixer` 3.65 refuses outright above 8.3, and Psalm crashes loading its autoloader because a transitive dependency still uses `case X;`.
+
+  | Ratchet | From | To | Measured cost |
+  |---|---|---|---|
+  | PHP floor | `^8.2` | `^8.5` | the upgrade itself; the two CI templates move with it |
+  | PHPUnit | `^9.6`, 8 flags | `^12`, all 13 | unmeasured — it cannot be measured from outside the repository |
+  | Rector's PHP set | `PHP_82` | `PHP_85` | nil today: the `PHP_85` set fired on nothing |
+
+- **Psalm in the application tier.**
+  Not shipped, because the first consumer does not use it. The cost of adopting it is measured and small at the loose end: **31 findings at errorLevel 6 or 8, every one of them `MissingOverrideAttribute`**, which `psalm --alter --issues=MissingOverrideAttribute` fixes in one sweep — so errorLevel 6 is one command from clean.
+  errorLevel 4 costs 9 more, errorLevel 2 costs 116 more (`ClassMustBeFinal` 30, `MissingConstructor` 20, `MissingClassConstType` 17, `PropertyNotSetInConstructor` 15).
+  `findUnusedCode` stays **off**, measured — see the decision record; turning it on needs a framework-aware plugin, which belongs to a framework standard.
+  Trigger: an application willing to run the sweep.
+
+- **ECS in the application tier, and the two rule families it waits on.**
+  The tier requires `php-cs-fixer` and `phpcs` and gives them entry points, but ships **no shared rule set for either** — nothing in the engine can carry one, and they are two new rule families.
+  Moving both through ECS instead is the preferred direction and costs **50 files, every finding auto-fixable**, measured with the package tier's own set. What it does not do is remove the tools it replaces: there is no enforce-absence rule, so `.php-cs-fixer.dist.php` and `phpcs.xml.dist` stay behind for a consumer to delete by hand.
+  Trigger: either the two rule families, or a consumer willing to migrate to ECS.
+
+- **`SymfonyStandard`, additive and tier-neutral.**
+  A framework standard adds rule *sets* (Rector's Symfony and Twig sets, a framework-aware Psalm plugin) rather than replacing files, so it composes beside either tier without a cross-product.
+  Framework path lists and bootstrap-file exclusions are deliberately *not* part of it: measured under the target tool versions, those five files produce only trivial auto-fixable findings, so the exclusions the archetype carries are artefacts of its old configs rather than necessities. The one real reason to exclude two of them is that Symfony Flex rewrites them.
+  **Blocked on an engine gap**, not on design: a framework standard needs to add a step to `app-checks`, and `ComposerScript` replaces a script's command list rather than merging it, so the later rule set silently wins. See the decision record; the engine's roadmap needs the item.
+
+- **The extraction of `OrthoCodeStandard`.**
+  Both tiers exist now, so the overlap is visible and the base can be extracted from them rather than designed ahead of them.
+  What is genuinely shared today: the `.editorconfig` block, `treatPhpDocTypesAsCertain: false`, `sort-packages`, `roave/security-advisories`, the sync scripts, and the shape of every `app-*` entry point.
+  What is not, and should stay per tier: the lock file in `.gitignore`, the PHP floor, the PHPStan level, the analyser set, and CI.
+  Read the template-move item at the bottom of this file before starting — it constrains how the extraction may move files.
 
 ## Deferred, with recorded triggers
 
@@ -50,10 +79,11 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   No phase ever landed it, which is why it appears here rather than in the decision record.
   Trigger: none needed — it is a family to pick up, and the upgrade path if shared layers ever appear is the engine's import rule pointing at a shared template.
 
-- **`roave/security-advisories` can be required now; declaring it is the open work.**
-  It was dropped because `ComposerRequirement` refused a branch constraint, and that package publishes only `dev-master` and `dev-latest`.
-  The engine removed that refusal on 2026-08-29: a declared constraint naming only a branch is now pinned, since branches have no ordering to floor, so the declared branch is written and a project on another one is rewritten to it.
-  What is left is this package's own tranche: declare it in the toolchain family with `constraint: dev-latest`, apply the standard to itself, and let the engine's own adoption pick it up.
+- **The CI block owns the whole file, and the runtime image is where that bites.**
+  Both forge companions ship CI as a managed block, and a single-document YAML block effectively owns its file — so the one thing an application is most likely to need to change is the one thing it cannot: the runtime image and the extensions built into it. The shipped Bitbucket pipeline runs a bare PHP image, which is enough to run the checks and not enough for an application needing `ext-intl` or its like, and such a repository's only route today is disabling the rule wholesale.
+  This is the **second** instance of the same engine gap the reusable-workflow item below records, now in a place where the variation is a hard requirement rather than a convenience.
+  Directions are the engine's to choose (named insertion points, per-target composition, or shipping a callable workflow consumers wrap); until one lands, an application whose CI needs more than the block gives writes its own pipeline and does not declare the forge companion.
+  Trigger: the first application whose runtime the shipped image cannot provide.
 
 - **Renovate, four things left open.**
 

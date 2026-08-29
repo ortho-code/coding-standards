@@ -1,0 +1,8 @@
+/.idea/
+/.phpunit.cache/
+/vendor/
+
+/.deptrac.cache
+/.phpunit.result.cache
+
+.DS_Store

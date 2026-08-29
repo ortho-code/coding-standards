@@ -1,7 +1,8 @@
 # coding-standards — the OrthoCode standard
 
 OrthoCode's own standards package on top of the `ortho-code/standards-sync` engine: it declares which config files belong in an OrthoCode repository and what they contain.
-Split by consumer kind — `PackageStandard` for libraries, `ProjectStandard` for applications later, a shared base extracted once both exist.
+Split by consumer kind — `PackageStandard` for libraries, `ProjectStandard` for applications — with a shared base extracted once the overlap is visible.
+CI is a forge companion beside the tier (`ProjectGitHubStandard`, `ProjectBitbucketStandard`), because a tier that ships one forge's CI cannot be adopted on another: the engine has no rule that enforces a file's absence.
 
 **This repository is published.** Nothing in it names an employer, a client, another organisation's packages, a local filesystem path, or any Claude config; examples speak of "a consumer" and "an org".
 Keep this file project-facing (no personal workflow prefs).
