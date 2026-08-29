@@ -50,9 +50,10 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   No phase ever landed it, which is why it appears here rather than in the decision record.
   Trigger: none needed — it is a family to pick up, and the upgrade path if shared layers ever appear is the engine's import rule pointing at a shared template.
 
-- **`roave/security-advisories` cannot be required, so it was dropped.**
-  The engine's `ComposerRequirement` refuses a branch constraint by design — it states no minimum version to enforce — and that package publishes only `dev-master` and `dev-latest`.
-  Trigger: an engine rule that enforces a requirement's *presence* rather than a version floor. Roave is the first real case for one.
+- **`roave/security-advisories` can be required now; declaring it is the open work.**
+  It was dropped because `ComposerRequirement` refused a branch constraint, and that package publishes only `dev-master` and `dev-latest`.
+  The engine removed that refusal on 2026-08-29: a declared constraint naming only a branch is now pinned, since branches have no ordering to floor, so the declared branch is written and a project on another one is rewritten to it.
+  What is left is this package's own tranche: declare it in the toolchain family with `constraint: dev-latest`, apply the standard to itself, and let the engine's own adoption pick it up.
 
 - **Renovate, four things left open.**
 
