@@ -5,22 +5,37 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 
 ## Open now
 
-- **The `.editorconfig` indentation decision, and with it `armin/editorconfig-cli`.**
-  `ec` is the only tool that would make the synced `.editorconfig` enforced rather than advisory, which is the whole argument for distributing it, so it was deferred rather than dropped.
-  The decision is narrow: whether the shared `.editorconfig` keeps `indent_style`.
+- **`armin/editorconfig-cli`, the family that makes the synced `.editorconfig` enforced rather than advisory.**
+  Researched 2026-08-29 and **deferred on priority, not on doubt**: the design below is settled and measured, and the work is a normal family tranche whenever it is picked up.
 
-  *Why it is not free.* Measured against the first consumer's 442 tracked files with the shipped template: **272 issues in 53 files**, of which **266** were "expected space, found tabs".
-  Adding `[*.neon] indent_style = tab` brought it to **224 in 23**.
-  The remainder is unfixable by any `.editorconfig` section — those tabs live inside PHP nowdoc fixtures and inside generated markdown that embeds tab-indented neon verbatim, and `ec` reads lines with no notion of string literals or code fences.
-  Dropping `indent_style` from the template brought it to **6 issues in 6 files**, all auto-fixable, because the validator builds its indentation rule only when a style is declared — `indent_size` alone is inert.
-  `--skip` cannot rescue it: `ec`'s skip map inverts two of its own entries, so the valid option name is rewritten into an invalid one and rejected (2.0.1 through 2.2.1).
+  *Measured against the first consumer's 449 tracked files, with `ec` 2.2.1.*
 
-  *What each side buys.* Keeping `indent_style` means `ec` can never run; dropping it buys enforced charset, line endings, final newline and trailing whitespace at the cost of the editor's space-versus-tab hint, with `indent_size` retainable either way.
-  ECS enforces PHP indentation regardless, which removes most of what the hint was for, and a fleet that ever has to serve a tabs-for-PHP convention would want `indent_style` out of a shared file anyway.
+  | Configuration | Issues / files |
+  |---|---|
+  | The shipped template as-is | 118 / 46 |
+  | + `[{*.neon,*.neon.dist}] indent_style = tab` | 54 / 11 |
+  | `indent_style` dropped entirely | 6 / 6 |
+  | `indent_style` kept, exceptions declared after the block | 6 / 6 |
 
-  *Before deciding, re-measure.* Those numbers predate ECS and Rector running over that consumer, so the trailing-whitespace and final-newline tail has probably already closed; the nowdoc tabs will not have moved, since fixers work on tokens and never touch a nowdoc body.
+  112 of the first row are "expected space, found tabs", and once neon is declared tab-indented the remainder is entirely the *generated* rule catalog, which embeds tab-indented neon inside code fences.
+  The 2026-08-28 numbers (272 in 53) predate ECS and Rector running over that consumer.
 
-  Also decide, if `ec` is adopted, whether the toolchain runs it under `--strict`: indent *size* is checked only there, and even then only as a multiple of the declared size, so a four-space file passes where two is declared. Indent *style* is always checked.
+  *The framing that was wrong.* This item used to read "keeping `indent_style` means `ec` can never run", which assumed the standard's block is the whole file.
+  It is not: `indent_style = unset` is honoured, and sections a consumer writes after the managed block override it.
+  So a repository keeps the standard's hint and neutralises its own exceptional paths in its own part of the file — the co-manage-a-region model the engine is built on — and lands on the same six issues as amputating the setting.
+  Keeping `indent_style` and adopting `ec` are therefore not alternatives.
+
+  *The shape agreed 2026-08-29.* The template declares `[{*.neon,*.neon.dist}] indent_style = tab`, since neon's own convention is tabs and the standard already ships PHPStan; the family adds `ComposerRequirement('armin/editorconfig-cli')`, an `app-ec` and an `app-ec-fix` script mirroring the ECS and Rector pairs, and `app-ec` into `app-checks`; the standard applies it to itself, and a consumer's own exceptions live outside the block.
+
+  *`--strict` is rejected, measured.* Without it only the indent *character* is checked, so any amount of spaces passes; with it, leading whitespace must be a multiple of `indent_size`.
+  On that consumer with the agreed configuration that is **904 issues in 105 files** — 785 in PHP, from nowdoc fixture bodies and the continuation lines ECS itself produces, plus 68 in markdown where nested bullets indent by two under a global size of four.
+  Its fixer also floors rather than rounds, truncating a six-space indent to four, so `--fix --strict` silently reindents fixture strings.
+  The honest consequence: `indent_size` stays documentation for editors, and only the indent character is enforced.
+
+  *Two facts about `ec` worth keeping.* `[*.md] trim_trailing_whitespace = false` exempts *lines* but not the *end of file* — read from `Validator`, the line rule is built only when the value is true, while the file-level rtrim rule is built whenever the property is set at all, whatever its value. So under `ec` no file may end in a blank line, markdown included.
+  And `--skip` cannot rescue a rule: `ec`'s skip map inverts two of its own entries, so the valid option name is rewritten into an invalid one and rejected (2.0.1 through 2.2.1).
+
+  *Adoption cost for the first consumer, applied and inspected*: six auto-fixed changes — one trailing blank line removed from each of five history documents, and a final newline added to `docker-compose.yml`.
 
 - **`ProjectStandard`, then the extraction of `OrthoCodeStandard`.**
   The package tier is real, so the second tier is now buildable, and the shared base is extracted from the two rather than designed ahead of them.
