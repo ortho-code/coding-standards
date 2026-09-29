@@ -318,3 +318,17 @@ So one shared set still serves a spaces repository and a tabs repository, as the
 
 *Rejected*: dropping the call without replacing it — the line ending would follow the machine.
 *Rejected*: keeping it until ECS removes it — a warning on every run, and the same fatal break `perCS30:` just caused, only later.
+
+### Correction, the same day: PER-CS has to load after the prepared sets
+
+The first subsection above claimed that the new set left the style where it was, and 0.2.1 shipped on that claim; it was wrong.
+Taking 0.2.1 into the engine repository showed 106 findings on its code: imports sorted alphabetically (`OrderedImportsFixer`, 45), `new class extends` gaining parentheses (`NewWithParenthesesFixer`, 42), `new class (` losing its space (`ClassDefinitionFixer`, 7), and empty bodies relaid (`BracesPositionFixer` and `SingleLineEmptyBodyFixer`, 6 each).
+
+*What the verification missed.* It compared ECS's `per-cs.php` with `@PER-CS3.0` in isolation — both true, both identical — but not the configuration in effect once every set has loaded.
+In ECS 13.3 `perCs` is one of the prepared sets, and a set loaded after it that registers the same fixer without options resets that fixer to its defaults: bisected, `controlStructures` resets `ClassDefinitionFixer` and `NewWithParenthesesFixer`, and `namespaces` resets `OrderedImportsFixer`.
+ECS 13.2 applied `withPhpCsFixerSets(perCS30: true)` as a dynamic set after all prepared sets, so PER-CS's options always won there; this repository's own code satisfied both orderings, which is why its check stayed clean.
+
+*The fix.* The shared set loads PER-CS on its own, after the prepared sets, with `->withSets([SetList::PER_CS])` in place of `perCs: true`.
+Verified with ECS 13.3.2: zero findings on the engine's code and on this repository's, which is the behaviour 0.2.0 had.
+
+*The lesson, for the next tool upgrade.* An equivalence check on a set's definition says nothing about precedence; the check that counts is the upgraded tool run over a real consumer's code, which is what caught this.
