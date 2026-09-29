@@ -109,11 +109,12 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   The general form of the problem is an engine concern and recorded there: a managed block has no extension point, which only goes unnoticed in line-oriented files where concatenation is composition.
   Trigger: the second repository that wants a CI step that is not a check-script command.
 
-- **Moving a template is no longer free.**
+- **Moving a template is free once consumers run engine 0.4.**
   Templates live under `templates/package/` so that shared files can take `templates/shared/` at extraction time.
-  While only managed blocks carried them the content was copied and the consumer never saw the path, but the ECS set, the Rector set and the PHPStan ruleset all render their path into the consumer's own config, and sync adds without retracting.
-  So a move now leaves a stale entry beside the new one in every consumer, exactly as the preset rename did.
-  This has to be settled inside the extraction work rather than after it: either shared templates keep the paths consumers already hold, or the move is priced as a migration across every consumer.
+  The ECS set, the Rector set and the PHPStan ruleset render their path into the consumer's own config, and on engine 0.3 sync adds without retracting, so a move leaves a stale entry beside the new one in every consumer, as the preset rename did.
+  From engine 0.4 every tool import is a list contribution: the consumer's `standards-sync.lock` records the path, and the next sync replaces a moved one in place.
+  The lock retracts only what it recorded, so consumers must sync once on 0.4 before a release moves any template; a release that moves a template and first requires `^0.4` leaves the old entry behind.
+  Trigger: engine 0.4.0, released before the extraction for exactly this reason.
 
 - **`ProjectStandard` and composer's `allow-plugins`.**
   The tier requires `slevomat/coding-standard`, which depends on the composer plugin `dealerdirect/phpcodesniffer-composer-installer`, and composer runs no plugin that `allow-plugins` does not name: an interactive install asks, a non-interactive one fails until the project allows or denies it.
