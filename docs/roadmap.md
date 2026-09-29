@@ -102,10 +102,12 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Trigger: a second repository where starting the changelog by hand is friction rather than a one-line chore.
 
 - **Ship the CI workflow as a *reusable* workflow.**
-  Today `standards.yml` is a block running `app-checks` and nothing else, and both the block and the script are standard-owned, so a repository wanting one extra step in that job has no route: it adds a second workflow file beside it, or disables the rule wholesale.
+  Today `standards.yml` is a block running `app-checks` and nothing else.
+  Since 0.3 a repository can add its own command to `app-checks` and the standard keeps it, so an extra check that is a command already runs in that job.
+  What still has no route is a step that is not a command in the check script, such as a service container, a cache or a second job: the repository adds a second workflow file beside the block, or disables the rule wholesale.
   A reusable workflow — the standard ships the callable one, each repository's thin workflow calls it and adds its steps — gives the variation without touching the engine.
   The general form of the problem is an engine concern and recorded there: a managed block has no extension point, which only goes unnoticed in line-oriented files where concatenation is composition.
-  Trigger: the second repository that wants a CI step the standard does not ship.
+  Trigger: the second repository that wants a CI step that is not a check-script command.
 
 - **Moving a template is no longer free.**
   Templates live under `templates/package/` so that shared files can take `templates/shared/` at extraction time.
