@@ -8,10 +8,12 @@ use PhpCsFixer\Fixer\Strict\DeclareStrictTypesFixer;
 use PhpCsFixer\Fixer\StringNotation\SingleQuoteFixer;
 use Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
+use Symplify\EasyCodingStandard\ValueObject\Option;
 
 // The shared ECS set: evaluated by ECS inside the consumer project, never by this package.
 return ECSConfig::configure()
-    ->withEditorConfig() // indentation and line endings come from the consumer's own .editorconfig
+    // What the synced .editorconfig says for PHP; a repository indenting with tabs overrides this in its own ecs.php.
+    ->withSpacing(indentation: Option::INDENTATION_SPACES, lineEnding: "\n")
     ->withPreparedSets(
         perCs: true, // PER-CS 3.0 as ECS 13.3 ships it; the set name is unversioned, so the ECS constraint is what pins it
         arrays: true,

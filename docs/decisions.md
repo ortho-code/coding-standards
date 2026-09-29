@@ -304,3 +304,17 @@ That would arrive as auto-fixable findings on an ECS update, visible in the cons
 
 *Rejected*: listing the 62 rules and 15 configured options explicitly in the template — an exact pin, but some eighty hand-maintained lines that stop tracking ECS's own corrections.
 *Rejected*: holding ECS below 13.3 — it keeps the template unchanged by freezing every consumer on an ageing ECS and the php-cs-fixer bundled with it.
+
+### Spacing is stated in the shared set, since `withEditorConfig()` no longer reads anything
+
+This supersedes the [2026-08-28 entry](#witheditorconfig-is-adopted-and-it-cost-the-engine-a-release): ECS 13.3.0 made `withEditorConfig()` a no-op that only prints a deprecation warning, so a consumer's `.editorconfig` no longer reaches ECS at all.
+Left alone, ECS falls back to its own default, `withSpacing(spaces, \PHP_EOL)` — CRLF on a Windows machine where CI enforces LF.
+
+The shared set now calls `withSpacing(indentation: Option::INDENTATION_SPACES, lineEnding: "\n")`, which is exactly what the synced `.editorconfig` declares for PHP (`indent_style = space`, `end_of_line = lf`).
+A repository indenting with tabs adds `->withSpacing(indentation: Option::INDENTATION_TAB)` to its own `ecs.php`.
+*Verified* with ECS 13.3.2: a consumer config importing a set that declares spaces, and declaring tabs itself, keeps a tab-indented file's tabs — the consumer's own call wins, because ECS applies it after importing the sets.
+
+So one shared set still serves a spaces repository and a tabs repository, as the 2026-08-28 entry wanted; the tabs repository now says so in its ECS config rather than only in its `.editorconfig`.
+
+*Rejected*: dropping the call without replacing it — the line ending would follow the machine.
+*Rejected*: keeping it until ECS removes it — a warning on every run, and the same fatal break `perCS30:` just caused, only later.
