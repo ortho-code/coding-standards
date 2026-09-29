@@ -2,6 +2,14 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## Unreleased
+
+`PackageStandard` now syncs a managed `.gitattributes` block that export-ignores what an installed copy of a library never needs: every file the standard syncs, under every name the engine accepts for it, `standards-sync.php` and `standards-sync.lock`, `tests/`, and a coding agent's project files — the README lists them all.
+The first `sync --check` after upgrading fails until you run `sync` once and commit the `.gitattributes` it writes.
+The block is appended to an existing `.gitattributes`, so export-ignore lines you already had that it now duplicates can go, and an override you already had (`/<path> -export-ignore`) has to move below the block, since git applies the later line.
+Anything else your library should leave out of its installs stays a line of your own below the block, such as `/docs export-ignore`.
+This package's own installs now carry only `src/`, `templates/`, the manifest, the licence, the readme and this changelog.
+
 ## 0.3.0 — 2026-09-29
 
 **Requires `ortho-code/standards-sync` 0.3.** A composer script the standard declares now keeps any command your repository added to it, and a later sync removes a command the standard stops declaring.
