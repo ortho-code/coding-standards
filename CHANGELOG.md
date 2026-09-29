@@ -2,6 +2,14 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## 0.3.0 — 2026-09-29
+
+**Requires `ortho-code/standards-sync` 0.3.** A composer script the standard declares now keeps any command your repository added to it, and a later sync removes a command the standard stops declaring.
+The engine records what the standard declared in `standards-sync.lock`, which you commit beside `standards-sync.php`; the first `sync --check` after upgrading fails until you run `sync` once and commit the lock.
+**Adopting over scripts you already have:** your own command stays after the declared one, so a tool can run twice — after the first sync, delete your own line wherever it runs the same tool; the drift report names every line it kept.
+`app-outdated` still stays out of the standard's `app-checks`, and a repository whose own `app-checks` runs it keeps that step.
+A standard declared beside this one can now add a step to its `app-checks` without restating the list.
+
 ## 0.2.2 — 2026-09-29
 
 **0.2.1 changed your code style, although its notes said it would not.** ECS 13.3 loads its PER-CS set as one of the prepared sets, and the sets loaded after it reset some of PER-CS's options: under 0.2.1, imports are sorted alphabetically, an anonymous class gains parentheses (`new class() extends`) and loses the space before its arguments, and empty bodies are relaid.
