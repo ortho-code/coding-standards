@@ -2,6 +2,12 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## 0.2.2 — 2026-09-29
+
+**0.2.1 changed your code style, although its notes said it would not.** ECS 13.3 loads its PER-CS set as one of the prepared sets, and the sets loaded after it reset some of PER-CS's options: under 0.2.1, imports are sorted alphabetically, an anonymous class gains parentheses (`new class() extends`) and loses the space before its arguments, and empty bodies are relaid.
+0.2.2 loads PER-CS after the other sets, which restores exactly the style 0.2.0 had.
+If you ran `ecs check --fix` on 0.2.1, running it again on 0.2.2 undoes the parentheses, spacing and body changes; the alphabetical import order stays, because PER-CS keeps imports in whatever order it finds them, so revert that part by hand if you want your old order back — either order passes.
+
 ## 0.2.1 — 2026-09-29
 
 The package tier's shared ECS set works with ECS 13.3, which removed two things it relied on: passing `perCS30:` to `withPhpCsFixerSets()` became a fatal error, and `withEditorConfig()` stopped reading anything.
