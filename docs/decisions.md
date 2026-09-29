@@ -332,3 +332,38 @@ ECS 13.2 applied `withPhpCsFixerSets(perCS30: true)` as a dynamic set after all 
 Verified with ECS 13.3.2: zero findings on the engine's code and on this repository's, which is the behaviour 0.2.0 had.
 
 *The lesson, for the next tool upgrade.* An equivalence check on a set's definition says nothing about precedence; the check that counts is the upgraded tool run over a real consumer's code, which is what caught this.
+
+## Agreed 2026-09-29 — adopting on the 0.3 engine
+
+### Two standards declaring one script now add to it
+
+This resolves the [2026-08-29 collision](#the-first-collision-between-two-standards-and-it-is-silent): from engine 0.3 the declarations of one composer script merge in declaration order, each adding its commands after the earlier ones', instead of the later one replacing the earlier.
+A framework standard declared beside a tier therefore adds a step to that tier's `app-checks` by declaring the same script with only that step, without restating the tier's list and whichever tier it is.
+*Verified* against the unreleased engine before 0.3.0, with a consumer declaring `ProjectStandard`, a stand-in framework rule set and `ProjectBitbucketStandard`: the step joins `app-checks` after the tier's commands when the framework is declared after the tier and before them when declared before, the engine's lock records the merged list, and the next check is in sync.
+That unblocks `SymfonyStandard`, which the [roadmap](roadmap.md) carried as waiting on exactly this.
+
+### Adoption keeps a consumer's own script commands, and the standard documents the cleanup
+
+From engine 0.3 a `ComposerScript` declares commands a script runs rather than owning the whole script: every declared command is enforced present, and every other command in the script is the consumer's and stays.
+A repository adopting the standard over scripts it already has under the same names therefore keeps its old command after the declared one — `["phpstan analyse", "php vendor/bin/phpstan --memory-limit=256M"]` runs the analyser twice until the repository deletes its line.
+
+*Measured* on the application tier's first consumer, an existing Symfony application on Bitbucket, with its current `scripts` section synced in a scratch copy: **ten of its ten tool scripts** keep a command of their own beside the declared one — `app-phpstan`, `app-run-tests`, `app-ec` and `app-ec-fix`, `app-csfixer` and `app-csfixer-fix`, `app-phpcs` and `app-phpcs-fix`, `app-rector` and `app-rector-fix`.
+Until they are deleted, CI runs each tool twice, and the old runs use the repository's previous flags and configs, so they can fail for reasons the standard no longer has.
+
+**The standard documents the cleanup rather than working around it**: the README's usage section tells an adopter to review the synced `scripts` and delete their own line wherever it runs the same tool.
+The engine's behaviour is deliberate — it never removes what a repository wrote and retracts only what it recorded declaring — and its drift report already names every line it kept.
+
+*Rejected*: `acceptsArguments` on the tool scripts to absorb the old commands — they are spelled differently (`php vendor/bin/phpstan …` is not `phpstan analyse` followed by arguments), so tolerance would not match them, and it would open the scripts to weakening flags besides.
+*Rejected*: leaving it to the drift report alone — it names the kept lines one script at a time, which does not tell an adopter up front that every tool script needs the same look.
+
+### `app-outdated` stays out of what the standard aggregates, not out of every `app-checks`
+
+The [2026-08-29 entry](#app-outdated-is-declared-and-deliberately-not-aggregated) keeps `app-outdated` out of `app-checks` because it fails on other people's release cadence.
+On the 0.3 engine that decision governs what the standard itself declares into the aggregate, and nothing more: a repository whose own `app-checks` already runs `@app-outdated` keeps it, because a step a repository added is its own.
+The first consumer is exactly that case — its `app-checks` opens with `@app-outdated`, and after adoption it reads `["@app-sync-check", "@app-outdated", "@app-ec", …, "@app-run-tests"]`.
+
+That is accepted: a repository that deliberately fails CI on outdated dependencies has made its own call, and removing the step would change its pipeline without asking.
+The README says "the standard keeps it out of `app-checks`" rather than that it stays outside, because only the first is true for every consumer.
+
+*Rejected*: enforcing the step's absence — it needs an engine rule that does not exist yet (an entry that must be absent, deferred on the engine's roadmap) and would overrule a repository's deliberate choice.
+*Rejected*: a strict `app-checks` — it would remove every step a repository added, its own analysers included, which is the behaviour the 0.3 engine moved away from.

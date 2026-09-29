@@ -64,7 +64,8 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 - **`SymfonyStandard`, additive and tier-neutral.**
   A framework standard adds rule *sets* (Rector's Symfony and Twig sets, a framework-aware Psalm plugin) rather than replacing files, so it composes beside either tier without a cross-product.
   Framework path lists and bootstrap-file exclusions are deliberately *not* part of it: measured under the target tool versions, those five files produce only trivial auto-fixable findings, so the exclusions the archetype carries are artefacts of its old configs rather than necessities. The one real reason to exclude two of them is that Symfony Flex rewrites them.
-  **Blocked on an engine gap**, not on design: a framework standard needs to add a step to `app-checks`, and `ComposerScript` replaces a script's command list rather than merging it, so the later rule set silently wins. See the decision record; the engine's roadmap needs the item.
+  **Unblocked by engine 0.3**, which merges the declarations of one composer script: the framework standard adds its step to `app-checks` by declaring the same script with only that step, whichever tier it is declared beside (see the decision record's 2026-09-29 entry on adopting on the 0.3 engine).
+  Trigger: none needed — the design pass is next.
 
 - **The extraction of `OrthoCodeStandard`.**
   Both tiers exist now, so the overlap is visible and the base can be extracted from them rather than designed ahead of them.

@@ -41,7 +41,7 @@ The same shape as the package tier, with its values set to **what an application
 
 **Not shipped, deliberately**: Psalm and ECS. Both are on the roadmap with the measured cost of adopting them.
 
-**And the enforcement that makes it real**: an `app-checks` script that runs the sync check and every tool, which the forge companion's CI calls by name. `app-outdated` is declared but stays *outside* `app-checks`, so CI never fails on someone else's release cadence.
+**And the enforcement that makes it real**: an `app-checks` script that runs the sync check and every tool, which the forge companion's CI calls by name. `app-outdated` is declared, but the standard keeps it *out of* `app-checks`, so its own CI never fails on someone else's release cadence; a repository that wants that gate adds the step itself, and it stays.
 
 ## Usage
 
@@ -52,6 +52,8 @@ return SyncConfig::create()->withRuleSet(new PackageStandard());
 ```
 
 Then `vendor/bin/standards-sync sync` applies the standard, and `sync --check` reports drift without writing. Both are available as `composer app-sync` and `composer app-sync-check` once the standard has been applied.
+
+**Adopting over scripts you already have.** A script the standard declares keeps any command a repository added to it, so a repository that already had, say, an `app-phpstan` of its own keeps that command after the standard's: `["phpstan analyse", "php vendor/bin/phpstan --memory-limit=256M"]` runs the analyser twice. After the first sync, review the `scripts` in `composer.json` and delete your own line wherever it runs the same tool as the standard's; the drift report names every line it kept.
 
 ## Development
 
