@@ -52,6 +52,7 @@ return SyncConfig::create()->withRuleSet(new PackageStandard());
 ```
 
 Then `vendor/bin/standards-sync sync` applies the standard, and `sync --check` reports drift without writing. Both are available as `composer app-sync` and `composer app-sync-check` once the standard has been applied.
+The sync also writes `standards-sync.lock` beside the config, recording the script commands the standard declared; commit it, because a later sync reads it to remove a command the standard stops declaring.
 
 **Adopting over scripts you already have.** A script the standard declares keeps any command a repository added to it, so a repository that already had, say, an `app-phpstan` of its own keeps that command after the standard's: `["phpstan analyse", "php vendor/bin/phpstan --memory-limit=256M"]` runs the analyser twice. After the first sync, review the `scripts` in `composer.json` and delete your own line wherever it runs the same tool as the standard's; the drift report names every line it kept.
 
