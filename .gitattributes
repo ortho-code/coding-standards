@@ -33,3 +33,7 @@
 /standards-sync.lock export-ignore
 /standards-sync.php export-ignore
 # <<< ortho-code <<<
+
+/docs export-ignore
+
+/renovate-package-preset.json export-ignore

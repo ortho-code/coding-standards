@@ -121,12 +121,6 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   The engine's composer config rule takes dotted names, so the tier could pin `allow-plugins.dealerdirect/phpcodesniffer-composer-installer` itself; what is open is whether a standard should grant a plugin permission to run code on every install, or leave that consent to the consumer.
   Trigger: the first consumer that does not already use slevomat, since one that does has answered composer's question already.
 
-- **Export-ignore this repository's own development files.**
-  This repository applies the package tier's export-ignore block to itself, so every install already leaves out its tests, tool configs, sync config and lock and agent files.
-  Two paths the block does not cover still ship: `docs/`, which the block leaves to each library, and `renovate-package-preset.json`, which the renovate bot fetches over the forge API and composer never needs.
-  What is left is two lines of this repository's own below the block.
-  Trigger: none; any release can carry it.
-
 - **Line-ending normalisation in `.gitattributes`.**
   Without it, a checkout under `core.autocrlf=true`, a common Windows setting, arrives with CRLF line endings, where the synced `.editorconfig` declares LF and the shared ECS set enforces it; `* text=auto eol=lf` has git check text files out with LF whatever that setting says (both verified with git 2.53).
   It is not in the package tier's block because it concerns both tiers alike, and because a repository with CRLF files already committed needs a one-time `git add --renormalize .` commit to adopt it.
