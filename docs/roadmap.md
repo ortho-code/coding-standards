@@ -126,3 +126,8 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Two paths the block does not cover still ship: `docs/`, which the block leaves to each library, and `renovate-package-preset.json`, which the renovate bot fetches over the forge API and composer never needs.
   What is left is two lines of this repository's own below the block.
   Trigger: none; any release can carry it.
+
+- **Line-ending normalisation in `.gitattributes`.**
+  Without it, a checkout under `core.autocrlf=true`, a common Windows setting, arrives with CRLF line endings, where the synced `.editorconfig` declares LF and the shared ECS set enforces it; `* text=auto eol=lf` has git check text files out with LF whatever that setting says (both verified with git 2.53).
+  It is not in the package tier's block because it concerns both tiers alike, and because a repository with CRLF files already committed needs a one-time `git add --renormalize .` commit to adopt it.
+  Trigger: the extraction of the shared base, where a line both tiers want belongs, or the first contributor whose checkout arrives in CRLF.
