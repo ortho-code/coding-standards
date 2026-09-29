@@ -19,7 +19,9 @@ return SyncConfig::create()
 
 ## What `PackageStandard` ships
 
-**Managed blocks**, distributed under the label `ortho-code`: `.editorconfig`, `.gitignore`, a `standards.yml` workflow running the checks on every push and pull request, and a tag-driven `release.yml` whose notes are the `CHANGELOG.md` section for that tag. On a repository's first sync each block is appended, keeping whatever the file already held; afterwards only the inside of the block is rewritten, so everything outside it stays the repository's own. The changelog itself is never synced — the standard ships the release mechanism, each repository writes its own prose.
+**Managed blocks**, distributed under the label `ortho-code`: `.editorconfig`, `.gitignore`, `.gitattributes`, a `standards.yml` workflow running the checks on every push and pull request, and a tag-driven `release.yml` whose notes are the `CHANGELOG.md` section for that tag. On a repository's first sync each block is appended, keeping whatever the file already held; afterwards only the inside of the block is rewritten, so everything outside it stays the repository's own. The changelog itself is never synced — the standard ships the release mechanism, each repository writes its own prose.
+
+**Export-ignore lines**, in the `.gitattributes` block, so the copy composer installs leaves out what only development needs: every file the standard syncs, under every name the engine accepts for it, the sync config and lock, `tests/`, and Claude Code's project files (`.claude/`, `CLAUDE.md`, `.mcp.json`). Anything else ships unless the library adds its own line outside the block, such as `/docs export-ignore`. To ship a listed file after all, write `/<path> -export-ignore` *below* the block, since git applies the later line; a first sync appends the block to an existing `.gitattributes`, so an override already there has to move below it.
 
 **Shared config, imported rather than copied**, so it rides `composer update`: the ECS fixer set (PER-CS 3.0 plus ECS's prepared sets, single quotes always), the Rector set, and the PHPStan ruleset. Each is registered as one entry in the consumer's own config, which the consumer otherwise owns. The ECS set indents with four spaces and LF line endings, as the synced `.editorconfig` does; a repository indenting with tabs adds `->withSpacing(indentation: Option::INDENTATION_TAB)` to its own `ecs.php`.
 
@@ -58,7 +60,7 @@ The sync also writes `standards-sync.lock` beside the config, recording the scri
 
 ## Development
 
-Everything distributed lives under `templates/`, one subdirectory per tier; the configs this package lints *itself* with stay at its root, outside that directory. This package applies its own standard to itself — its `.editorconfig`, `.gitignore`, workflows and tool configs are all synced output, so `composer app-checks` here runs exactly what a consumer runs.
+Everything distributed lives under `templates/`, one subdirectory per tier; the configs this package lints *itself* with stay at its root, outside that directory. This package applies its own standard to itself — its `.editorconfig`, `.gitignore`, `.gitattributes`, workflows and tool configs are all synced output, so `composer app-checks` here runs exactly what a consumer runs.
 
 Tests: `composer app-run-tests`. They assert this package's contribution — the right content wired to the right file — not the engine's rendering, which the engine's own suite pins. Where the standard states the same thing twice, the suite pins the pair: a shipped template's values against the rule that enforces them, and the workflow's call against the script name the standard declares.
 

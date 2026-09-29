@@ -43,6 +43,35 @@ final class PackageStandardTest extends TestCase
         self::assertStringContainsString('/vendor/', $result['./.gitignore']);
     }
 
+    public function testSyncingDropsTheManagedGitattributesBlock(): void
+    {
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertArrayHasKey('./.gitattributes', $result);
+        self::assertStringContainsString('ortho-code', $result['./.gitattributes']);
+        self::assertStringContainsString('/standards-sync.lock export-ignore', $result['./.gitattributes']);
+    }
+
+    // Nothing ties the template's list to the files the rules write, so a family added later would ship its config into every consumer's vendor/.
+    public function testTheShippedGitattributesTemplateExportIgnoresEveryFileTheStandardWrites(): void
+    {
+        preg_match_all('~^/(\S+) export-ignore$~m', (string) file_get_contents(__DIR__ . '/../templates/package/gitattributes'), $matches);
+        $ignored = $matches[1];
+
+        // The sync config and its lock are the engine's own files rather than any rule's target.
+        $written = ['standards-sync.php', 'standards-sync.lock'];
+        foreach ((new PackageStandard())->rules() as $rule) {
+            foreach ($rule->target()->candidates() as $candidate) {
+                $written[] = $candidate->value();
+            }
+        }
+
+        // composer.json is the one written file an installed copy needs, since composer installs by it.
+        foreach (array_diff(array_unique($written), ['composer.json']) as $path) {
+            self::assertTrue(self::isExportIgnored($path, $ignored), sprintf('The template must export-ignore %s.', $path));
+        }
+    }
+
     public function testSyncingCreatesAPhpUnitConfigFromTheTemplate(): void
     {
         $result = (new SyncTester())->sync($this->config());
@@ -357,6 +386,19 @@ final class PackageStandardTest extends TestCase
 
         self::assertArrayHasKey('./.editorconfig', $result);
         self::assertArrayHasKey('./.gitignore', $result);
+    }
+
+    /** @param list<string> $ignored root-anchored paths without their leading slash; a listed directory covers everything below it */
+    private static function isExportIgnored(string $path, array $ignored): bool
+    {
+        do {
+            if (in_array($path, $ignored, true)) {
+                return true;
+            }
+            $path = dirname($path);
+        } while ($path !== '.');
+
+        return false;
     }
 
     private function config(): SyncConfig

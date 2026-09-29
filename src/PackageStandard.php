@@ -40,6 +40,7 @@ final class PackageStandard extends Standard
     {
         $this->enforceEditorConfig($package);
         $this->enforceGitignore($package);
+        $this->enforceGitattributes($package);
         $this->enforcePhpUnit($package);
         $this->enforceEcs($package);
         $this->enforceRector($package);
@@ -65,6 +66,17 @@ final class PackageStandard extends Standard
             target: FileTarget::fromString('.gitignore'),
             label: Label::fromString(self::LABEL),
             content: $package->read('package/.gitignore'),
+        ));
+    }
+
+    /** Export-ignores what no installed copy of a library needs: every file the standard puts into it, and the conventional development paths beside them. Anything else stays the library's own lines. */
+    private function enforceGitattributes(Package $package): void
+    {
+        $this->addRule(new ManagedBlock(
+            target: FileTarget::fromString('.gitattributes'),
+            label: Label::fromString(self::LABEL),
+            // No leading dot: git would read a template named .gitattributes as this repository's own and export-ignore the templates beside it.
+            content: $package->read('package/gitattributes'),
         ));
     }
 

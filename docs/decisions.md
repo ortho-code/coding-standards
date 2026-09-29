@@ -367,3 +367,38 @@ The README says "the standard keeps it out of `app-checks`" rather than that it 
 
 *Rejected*: enforcing the step's absence — it needs an engine rule that does not exist yet (an entry that must be absent, deferred on the engine's roadmap) and would overrule a repository's deliberate choice.
 *Rejected*: a strict `app-checks` — it would remove every step a repository added, its own analysers included, which is the behaviour the 0.3 engine moved away from.
+
+## Agreed 2026-09-30 — the package tier's export-ignore block
+
+### What composer installed was the whole repository
+
+Composer installs the zip `git archive` builds, which leaves out every path `.gitattributes` marks `export-ignore`, and the package tier synced no `.gitattributes`.
+*Measured* in the installed copies: this package, as the engine installs it, carried its entire repository, `tests/`, `docs/`, its tool configs, sync config and lock included; the engine, as this package installs it, left out the `tests/` and `docs/` its own `.gitattributes` names and still carried `ecs.php`, `phpstan.neon`, `psalm.xml`, `rector.php`, `renovate.json5`, `standards-sync.php` and `standards-sync.lock`.
+Nothing reads those files in `vendor/`, so nothing broke; it is weight and noise in every install.
+
+### The block lists every name, not the one a library uses
+
+`.gitattributes` is line-oriented with `#` comments, so it is a managed block like `.gitignore` and needed no engine work.
+It lists each tool config under every filename the engine accepts for it, the renovate config's included, because a listed path that does not exist does nothing — verified with `git archive` on git 2.53 — so listing them all costs lines and nothing else.
+`.github/` is listed whole, which covers the workflows and `.github/renovate.json` alike.
+The package's suite pins the list: every file a rule of the standard can write, under every name, must be covered, with `composer.json` the one exception, since composer installs by it.
+A family added later therefore fails the suite until its config is in the block.
+
+*Paths anchor, as in `.gitignore`.* `/CLAUDE.md` covers the root file only, so a `CLAUDE.md` nested deeper still ships; that is rare, and an unanchored pattern is the risk the [authoring conventions](authoring.md#ordering-inside-a-distributed-list-file) warn against.
+
+### Beyond synced files: `tests/` and Claude Code's project files, but not `docs/`
+
+The block also carries `/tests`, because the seeded PHPUnit config names that directory as the suite, so the standard is what puts it there.
+It carries `/.claude`, `/CLAUDE.md` and `/.mcp.json` as well: they configure an agent working in the repository and do nothing in an installed package.
+*Rejected*: leaving `tests/` to each library, as the roadmap first recorded it — every library the standard serves would write the same line.
+*Rejected*: `docs/` in the block — nothing the standard ships names it, so whether a library's documentation travels with its installs stays the library's call, made with a line of its own outside the block.
+
+### An override goes below the block
+
+For one path git applies the later line, verified: `/phpstan.neon -export-ignore` below the block ships the file, and the same line above it loses.
+A library that wants a listed file in its installs writes that line below the block.
+A first sync appends the block to an existing `.gitattributes`, so an override a repository already had ends up above the block and stops working until it is moved below.
+
+### The application tier ships none of it
+
+An application is not installed as a dependency, so no archive of it ever reaches a `vendor/` directory.

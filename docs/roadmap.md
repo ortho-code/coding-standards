@@ -70,7 +70,7 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 - **The extraction of `OrthoCodeStandard`.**
   Both tiers exist now, so the overlap is visible and the base can be extracted from them rather than designed ahead of them.
   What is genuinely shared today: the `.editorconfig` block, `treatPhpDocTypesAsCertain: false`, `sort-packages`, `roave/security-advisories`, the sync scripts, and the shape of every `app-*` entry point.
-  What is not, and should stay per tier: the lock file in `.gitignore`, the PHP floor, the PHPStan level, the analyser set, and CI.
+  What is not, and should stay per tier: the lock file in `.gitignore`, the export-ignore block in `.gitattributes`, which only a library needs, the PHP floor, the PHPStan level, the analyser set, and CI.
   Read the template-move item at the bottom of this file before starting — it constrains how the extraction may move files.
 
 ## Deferred, with recorded triggers
@@ -122,16 +122,7 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Trigger: the first consumer that does not already use slevomat, since one that does has answered composer's question already.
 
 - **Export-ignore this repository's own development files.**
-  Composer installs the zip `git archive` builds, and this repository has no `.gitattributes`, so every consumer's copy carries the whole repository, including `tests/`, `docs/`, the tool configs this package lints itself with, and its own `standards-sync.php` and `standards-sync.lock`.
-  Nothing reads them there, since the engine reads a lock only at a consumer's root, so this is a tidy-up: one `.gitattributes` marking them `export-ignore`, while `src/` and `templates/` keep shipping.
+  This repository applies the package tier's export-ignore block to itself, so every install already leaves out its tests, tool configs, sync config and lock and agent files.
+  Two paths the block does not cover still ship: `docs/`, which the block leaves to each library, and `renovate-package-preset.json`, which the renovate bot fetches over the forge API and composer never needs.
+  What is left is two lines of this repository's own below the block.
   Trigger: none; any release can carry it.
-
-- **`PackageStandard` shipping export-ignore lines to the libraries that use it.**
-  Every package-tier consumer has the same problem as this repository: the configs the standard syncs into it, with its `standards-sync.php` and `standards-sync.lock`, ship inside every copy composer installs.
-  A `.gitattributes` is line-oriented with `#` comments, so a managed block carries it today and this needs no engine work.
-  The block would list only what the standard itself puts into a library: `.editorconfig`, `.gitignore`, `.github/`, each tool config under every filename the engine accepts for it, the sync config and lock, and `.gitattributes` itself; a listed path that does not exist does nothing.
-  Paths such as `tests/` and `docs/` stay the repository's own lines outside the block, since whether a library ships them is its own choice.
-  A repository that already export-ignores some of these keeps its lines beside the block, much as adoption keeps a repository's own script commands, and can delete them by hand.
-  The application tier needs none of it, since an application is not installed as a dependency.
-  Because this repository applies the package tier to itself, it would also settle most of the item above, leaving only its own lines for `tests/`, `docs/` and the like.
-  Trigger: none needed; any release can carry it, and landing it before the item above leaves less of that to write by hand.
