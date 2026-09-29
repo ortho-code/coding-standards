@@ -2,6 +2,13 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## 0.2.1 — 2026-09-29
+
+The package tier's shared ECS set works with ECS 13.3, which removed two things it relied on: passing `perCS30:` to `withPhpCsFixerSets()` became a fatal error, and `withEditorConfig()` stopped reading anything.
+PER-CS 3.0 now comes from ECS's own `perCs` prepared set, the same 62 rules with the same options, so your code style does not move.
+The standard now requires ECS `^13.3`, raised in your `composer.json` on the next sync; run `composer update symplify/easy-coding-standard` afterwards if your lock still holds an older version.
+Indentation and line endings are now stated in the set as four spaces and LF, which is what the synced `.editorconfig` declares; a repository indenting with tabs adds `->withSpacing(indentation: Option::INDENTATION_TAB)` to its own `ecs.php`.
+
 ## 0.2.0 — 2026-08-29
 
 Adds the application tier. `ProjectStandard` syncs the same managed `.editorconfig` as the package tier and a `.gitignore` that leaves `composer.lock` tracked, seeds a phpunit config and pins eight strictness flags, imports a shared PHPStan ruleset at level 9 and a shared Rector set targeting the tier's own PHP floor, and requires php-cs-fixer, phpcs and editorconfig-cli with an `app-*` entry point each. It ships neither Psalm nor ECS.
