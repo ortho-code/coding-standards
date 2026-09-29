@@ -119,3 +119,8 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   The tier requires `slevomat/coding-standard`, which depends on the composer plugin `dealerdirect/phpcodesniffer-composer-installer`, and composer runs no plugin that `allow-plugins` does not name: an interactive install asks, a non-interactive one fails until the project allows or denies it.
   The engine's composer config rule takes dotted names, so the tier could pin `allow-plugins.dealerdirect/phpcodesniffer-composer-installer` itself; what is open is whether a standard should grant a plugin permission to run code on every install, or leave that consent to the consumer.
   Trigger: the first consumer that does not already use slevomat, since one that does has answered composer's question already.
+
+- **Export-ignore this repository's own development files.**
+  Composer installs the zip `git archive` builds, and this repository has no `.gitattributes`, so every consumer's copy carries the whole repository, including `tests/`, `docs/`, the tool configs this package lints itself with, and its own `standards-sync.php` and `standards-sync.lock`.
+  Nothing reads them there, since the engine reads a lock only at a consumer's root, so this is a tidy-up: one `.gitattributes` marking them `export-ignore`, while `src/` and `templates/` keep shipping.
+  Trigger: none; any release can carry it.
