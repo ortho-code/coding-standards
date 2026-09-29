@@ -285,3 +285,22 @@ Two rule sets declaring the same script name therefore do **not** merge: declara
 The engine's designed answer is in that rule's own docblock — a project needing extra steps declares its own script and calls the owned one by `@name`. That works for a *project*. It does not work for a *standard*: a framework standard wanting one more step in `app-checks` cannot rename the entry point every consumer's CI calls.
 
 The engine records the same shape for managed blocks, with directions and a trigger. It does not record the composer-script form, nor the two-standards-one-name case. Both belong in the engine's roadmap, and a framework standard is their trigger.
+
+## Changed 2026-09-29 — ECS 13.3 moved PER-CS into a prepared set
+
+### PER-CS 3.0 now comes from `withPreparedSets(perCs: true)`, and the ECS constraint carries the pin
+
+This supersedes the mechanism in the [2026-08-28 entry](#ecs-per-cs-30-pinned-rather-than-aliased); the goal — PER-CS 3.0, never a moving alias — is unchanged.
+
+ECS 13.3.0 emptied `withPhpCsFixerSets()`: it takes no parameters, only prints a deprecation warning, and passing `perCS30:` is a fatal "Unknown named parameter".
+Every package-tier consumer broke on its first install to resolve 13.3; 13.2.19 was the last version to accept the parameter.
+Its replacement is ECS's own prepared set `perCs`, loaded from its `config/set/per-cs.php`, which ECS 13.2 does not have — hence the floor moving from `^13.2` to `^13.3`.
+
+*Verified before adopting it* (ECS 13.3.2, with the php-cs-fixer 3.95.24 it bundles): the set's 62 fixers are exactly the 62 rules php-cs-fixer resolves `@PER-CS3.0` to, and the 15 it configures carry exactly `@PER-CS3.0`'s options.
+Applied to this repository, the new set produced no findings, so the style did not move.
+
+**What changed about the pin.** The set name `perCs` carries no version, so the pin moved from php-cs-fixer's versioned set name to the ECS version itself: a later ECS release could move `perCs` to a newer PER.
+That would arrive as auto-fixable findings on an ECS update, visible in the consumer's diff, rather than silently.
+
+*Rejected*: listing the 62 rules and 15 configured options explicitly in the template — an exact pin, but some eighty hand-maintained lines that stop tracking ECS's own corrections.
+*Rejected*: holding ECS below 13.3 — it keeps the template unchanged by freezing every consumer on an ageing ECS and the php-cs-fixer bundled with it.

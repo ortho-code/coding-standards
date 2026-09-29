@@ -12,10 +12,8 @@ use Symplify\EasyCodingStandard\Config\ECSConfig;
 // The shared ECS set: evaluated by ECS inside the consumer project, never by this package.
 return ECSConfig::configure()
     ->withEditorConfig() // indentation and line endings come from the consumer's own .editorconfig
-    ->withPhpCsFixerSets(
-        perCS30: true, // pinned; the @PER-CS alias follows the newest set
-    )
     ->withPreparedSets(
+        perCs: true, // PER-CS 3.0 as ECS 13.3 ships it; the set name is unversioned, so the ECS constraint is what pins it
         arrays: true,
         casing: true,
         cleanup: true,
