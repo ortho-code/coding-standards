@@ -114,3 +114,8 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   While only managed blocks carried them the content was copied and the consumer never saw the path, but the ECS set, the Rector set and the PHPStan ruleset all render their path into the consumer's own config, and sync adds without retracting.
   So a move now leaves a stale entry beside the new one in every consumer, exactly as the preset rename did.
   This has to be settled inside the extraction work rather than after it: either shared templates keep the paths consumers already hold, or the move is priced as a migration across every consumer.
+
+- **`ProjectStandard` and composer's `allow-plugins`.**
+  The tier requires `slevomat/coding-standard`, which depends on the composer plugin `dealerdirect/phpcodesniffer-composer-installer`, and composer runs no plugin that `allow-plugins` does not name: an interactive install asks, a non-interactive one fails until the project allows or denies it.
+  The engine's composer config rule takes dotted names, so the tier could pin `allow-plugins.dealerdirect/phpcodesniffer-composer-installer` itself; what is open is whether a standard should grant a plugin permission to run code on every install, or leave that consent to the consumer.
+  Trigger: the first consumer that does not already use slevomat, since one that does has answered composer's question already.
