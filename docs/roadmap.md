@@ -107,7 +107,7 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   The GitHub workflows had the same gap and lost it in 0.4.0, when the engine began holding them to containment ([decision](decisions.md#the-shipped-github-workflows-are-githubworkflow-rules-not-managed-blocks)); the same answer for Bitbucket Pipelines is an engine rule family of its own, and until one lands, an application whose CI needs more than the block gives writes its own pipeline and does not declare the forge companion.
   Trigger: the first application whose runtime the shipped image cannot provide.
 
-- **Renovate, five things left open.**
+- **Renovate, six things left open.**
   The Renovate app runs on this repository and the engine's since 2026-09-30, and opens its updates as pull requests.
 
   *Preset indirection versus syncing the rules directly.* Writing the rules into each consumer's own renovate config rather than pointing at a shared preset is the preferred direction; both work, and they differ in when a change propagates. A preset changes for every consumer the moment the bot next runs, with no sync and no pull request; synced rules need a sync per repository but need no forge fetch and are readable in the repository. Doing it needs a new engine rule family — nothing today writes arbitrary renovate settings, only the `extends` entry.
@@ -138,6 +138,16 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   An application commits its lock and gets a lock-only pull request for every release inside its constraints, which is where grouping `require-dev` upgrades and automerging their patches and minors are worth deciding.
   A known shape to start from: patch and minor upgrades grouped per dependency type, the development group automerged, the analysers kept out of automerge because their minors surface new findings, and composer's lock maintenance left off, because Composer has no release-age setting and a full regeneration would bypass any release-age wait.
   Trigger: the first application that runs the bot, the same as the release item above.
+
+  *Whether the hosted app reaches Bitbucket at all.*
+  Three items above assume it does: updates to the Bitbucket pipeline block arise only in a Bitbucket repository, and the release and grouping items wait on an application running the bot, while the tier's first consumer is on Bitbucket.
+  The app runs here as a GitHub app; whether Mend's hosted app serves Bitbucket Cloud repositories, or such a repository needs a self-hosted bot, is not researched.
+  Trigger: the first application on Bitbucket to adopt the tier, before any of those three is taken up.
+
+- **The application tier's GitHub workflow has never run on `ubuntu-26.04`.**
+  No CI this standard owns runs `ProjectGitHubStandard`'s workflow, so PHP 8.2 on the pinned runner, whose image preinstalls 8.5 and leaves `setup-php` to install 8.2, is untried ([decision](decisions.md#the-runner-label-is-pinned-to-ubuntu-2604)).
+  The package tier's workflow runs on it in this repository's own CI and passes.
+  Trigger: the first application declaring `ProjectGitHubStandard`, whose first CI run is the check, or the tier's PHP floor rising to 8.5, whichever comes first, since 8.5 on that runner is what this repository's CI already runs.
 
 - **A generic seed-if-absent rule, for changelogs and their like.**
   The release family shipped the workflow as a managed block and left `CHANGELOG.md` to each repository.
