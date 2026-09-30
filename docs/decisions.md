@@ -414,6 +414,16 @@ An extract-only dry run confirmed it: the manager found the three GitHub templat
 The pattern is anchored to the root, so a nested `templates/` directory, such as a test fixture's, never matches.
 *Rejected*: the pattern in the shared preset — every consumer would read its own `templates/`, which in a Symfony application holds Twig, and a consumer receives these updates through a release and a sync, never from the bot.
 
+### The Bitbucket template's image is left to the application tier's floor
+
+The Bitbucket Pipelines manager reads every `*-pipelines.yml` by default, so it found `templates/project/ci-pipelines.yml` unaided and offered `php:8.2-cli` → `php:8.5-cli` on its first run.
+That image is the application tier's PHP floor: `ProjectStandard` requires `php: ^8.2`, and the GitHub companion's template pins `php-version: '8.2'`, a `setup-php` input the bot does not read.
+Taking the update would have moved only Bitbucket applications' CI off the floor, and the two companions apart.
+This repository's `renovate.json5` turns the bot off for that one dependency, so the image moves only with the floor, in the same release as the requirement and the GitHub template.
+A lookup dry run confirmed it: the image went from a pending minor update to disabled, and every other dependency's result stayed the same.
+*Rejected*: declining the update each time — it holds only while the bot asks for approval before opening anything, and otherwise it is a pull request for every PHP minor.
+*Rejected*: `allowedVersions` below the next minor — the same effect today, with the floor written in a fourth place that has to move with the other three.
+
 ## Agreed 2026-09-30 — the shipped workflows' actions and runner
 
 ### Actions move to their Node 24 majors

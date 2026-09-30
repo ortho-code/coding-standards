@@ -7,5 +7,17 @@
         "managerFilePatterns": [
             "/^templates/.+\\.ya?ml$/"
         ]
-    }
+    },
+    "packageRules": [
+        // The Bitbucket template's image is the application tier's PHP floor, so it moves with that floor in a release of this standard, never on its own.
+        {
+            "matchFileNames": [
+                "templates/project/ci-pipelines.yml"
+            ],
+            "matchDepNames": [
+                "php"
+            ],
+            "enabled": false
+        }
+    ]
 }
