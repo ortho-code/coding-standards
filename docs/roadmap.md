@@ -86,14 +86,16 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Directions are the engine's to choose (named insertion points, per-target composition, or shipping a callable workflow consumers wrap); until one lands, an application whose CI needs more than the block gives writes its own pipeline and does not declare the forge companion.
   Trigger: the first application whose runtime the shipped image cannot provide.
 
-- **Renovate, five things left open.**
-  The Renovate app runs on the organisation since 2026-09-30, for every repository.
+- **Renovate, four things left open.**
+  The Renovate app runs on this repository and the engine's since 2026-09-30, and opens its updates as pull requests.
 
   *Preset indirection versus syncing the rules directly.* Writing the rules into each consumer's own renovate config rather than pointing at a shared preset is the preferred direction; both work, and they differ in when a change propagates. A preset changes for every consumer the moment the bot next runs, with no sync and no pull request; synced rules need a sync per repository but need no forge fetch and are readable in the repository. Doing it needs a new engine rule family — nothing today writes arbitrary renovate settings, only the `extends` entry.
 
   *Updates to a consumer's managed blocks.*
   The bot reads a consumer's synced workflows like any other, so an action or runner update there arrives as a pull request that fails `sync --check`, because a managed block changes only through a release of this package.
   Either the preset disables those updates for the files the standard manages, which ties the preset to the templates' destination paths, or the failing pull request stays as the signal that a release is due.
+  The failing pull request is the preferred answer, to be checked against the first one: once the release it waits for is out, its edit should be exactly what a sync writes, which makes merging it the consumer's sync.
+  GitHub Actions digest pinning waits on this item, since it would turn every release inside a pinned major into such a pull request.
   Trigger: the first such pull request.
 
   *A release that changes synced content.*
@@ -104,9 +106,12 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   0.3.1 was the first such release, and the engine repository was synced to it the same day.
   Trigger: the first application that runs the bot and receives such a release.
 
-  *Grouping `require-dev` upgrades into one pull request* — less noise, at the cost of coupling unrelated upgrades.
-
-  *Automerging dev-dependency patch and minor upgrades* — this was blocked until the standard shipped CI, since automerge without checks merges blind. It ships CI now, so the block is gone and only the decision is left.
+  *Grouping and automerging in-range upgrades belong to an application preset, not this one.*
+  A library commits no lock, and Renovate's composer default then opens a pull request only when a release falls outside the manifest's constraint, which in practice means a new major; a release inside it changes nothing in the repository, and the next CI run installs it.
+  So the package preset has no patch or minor upgrades to group or automerge.
+  An application commits its lock and gets a lock-only pull request for every release inside its constraints, which is where grouping `require-dev` upgrades and automerging their patches and minors are worth deciding.
+  A known shape to start from: patch and minor upgrades grouped per dependency type, the development group automerged, the analysers kept out of automerge because their minors surface new findings, and composer's lock maintenance left off, because Composer has no release-age setting and a full regeneration would bypass any release-age wait.
+  Trigger: the first application that runs the bot, the same as the release item above.
 
 - **A generic seed-if-absent rule, for changelogs and their like.**
   The release family shipped the workflow as a managed block and left `CHANGELOG.md` to each repository.
