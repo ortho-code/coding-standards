@@ -61,6 +61,13 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Moving both through ECS instead is the preferred direction and costs **50 files, every finding auto-fixable**, measured with the package tier's own set. What it does not do is remove the tools it replaces: there is no enforce-absence rule, so `.php-cs-fixer.dist.php` and `phpcs.xml.dist` stay behind for a consumer to delete by hand.
   Trigger: either the two rule families, or a consumer willing to migrate to ECS.
 
+- **`composer audit` in the application tier.**
+  An application installs from its committed lock, and `roave/security-advisories` only takes effect when dependencies are resolved again, which `composer install` from a lock never does, so an advisory published after the lock was written goes unnoticed until the next update.
+  `composer audit` asks Packagist for advisories against the locked versions and exits non-zero on any, so as a step in the tier's `app-checks` it would close that gap in every CI build.
+  It also fails on a dependency its maintainer marks abandoned, since Composer 2.10's `audit.abandoned` defaults to `fail`; keeping that or setting it to `report` is part of the decision.
+  The package tier does not need it: a library commits no lock, so every CI run resolves afresh and roave already refuses a vulnerable version.
+  Trigger: none needed — it is a design pass for the application tier.
+
 - **`SymfonyStandard`, additive and tier-neutral.**
   A framework standard adds rule *sets* (Rector's Symfony and Twig sets, a framework-aware Psalm plugin) rather than replacing files, so it composes beside either tier without a cross-product.
   Framework path lists and bootstrap-file exclusions are deliberately *not* part of it: measured under the target tool versions, those five files produce only trivial auto-fixable findings, so the exclusions the archetype carries are artefacts of its old configs rather than necessities. The one real reason to exclude two of them is that Symfony Flex rewrites them.
