@@ -2,6 +2,11 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## Unreleased
+
+`PackageStandard` now requires PHPUnit `^13`, raised in your `composer.json` on the next sync; run `composer update phpunit/phpunit` afterwards if your lock still holds 12.
+The synced `phpunit.xml` and its thirteen strictness flags are unchanged and valid under 13, but since the standard pins `failOnPhpunitDeprecation`, a test using an API that PHPUnit 13 deprecated now fails.
+
 ## 0.3.1 — 2026-09-30
 
 `PackageStandard` now syncs a managed `.gitattributes` block that export-ignores what an installed copy of a library never needs: every file the standard syncs, under every name the engine accepts for it, `standards-sync.php` and `standards-sync.lock`, `tests/`, and a coding agent's project files — the README lists them all.

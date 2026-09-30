@@ -47,7 +47,7 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   | Ratchet | From | To | Measured cost |
   |---|---|---|---|
   | PHP floor | `^8.2` | `^8.5` | the upgrade itself; the two CI templates move with it |
-  | PHPUnit | `^9.6`, 8 flags | `^12`, all 13 | unmeasured — it cannot be measured from outside the repository |
+  | PHPUnit | `^9.6`, 8 flags | `^13`, all 13 | unmeasured — it cannot be measured from outside the repository |
   | Rector's PHP set | `PHP_82` | `PHP_85` | nil today: the `PHP_85` set fired on nothing |
 
 - **Psalm in the application tier.**

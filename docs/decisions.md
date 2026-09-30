@@ -443,3 +443,13 @@ The jobs need nothing from the image beyond what `setup-php` installs, and `setu
 *Rejected*: pinning `ubuntu-24.04` — it only postpones the same move to that image's retirement.
 
 ⚠ The application tier's PHP 8.2 on 26.04 is untried: no CI this standard owns runs the project tier's GitHub companion, so the first application declaring it is the first run.
+
+## Agreed 2026-09-30 — the package tier requires PHPUnit 13
+
+### The floor moves to `^13`, now that Psalm installs beside it
+
+This supersedes the floor in the [2026-08-28 entry](#phpunit-thirteen-strictness-flags-defaults-included); the thirteen flags are unchanged.
+`^12` was chosen while Psalm 6.14 to 6.16, the first lines to run on PHP 8.5, could not install beside PHPUnit 13 over `sebastian/diff`; Psalm 6.17.0 accepts the major PHPUnit 13 needs.
+Measured in this repository and the engine on PHPUnit 13.3.6 beside Psalm 6.19.1: every check passes, and `phpunit --validate-configuration` accepts both configs, so all thirteen flags exist in 13. PHPUnit 13 needs PHP 8.4.1, below the tier's `^8.5`.
+With the move, every tool floor the tier declares sits on its current major.
+*Rejected*: keeping `^12` — as a floor it holds nobody back from 13, but with its reason gone it only leaves each library on the older major until it moves by itself.

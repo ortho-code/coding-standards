@@ -101,7 +101,7 @@ final class PackageStandard extends Standard
             'failOnSkipped' => true,
             'failOnWarning' => true,
         ]));
-        $this->addRule(new ComposerRequirement(package: 'phpunit/phpunit', constraint: VersionConstraint::fromString('^12')));
+        $this->addRule(new ComposerRequirement(package: 'phpunit/phpunit', constraint: VersionConstraint::fromString('^13')));
         $this->addRule(new ComposerScript(name: 'app-run-tests', commands: ['phpunit']));
     }
 
