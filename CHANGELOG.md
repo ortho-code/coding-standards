@@ -2,7 +2,7 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
-## Unreleased
+## 0.3.3 — 2026-09-30
 
 The shared Renovate preset now waits until a release is seven days old before proposing it, opens a pull request when Renovate renames an option your config uses, and no longer proposes changes to your `php` requirement, which the standard owns.
 A preset change reaches your repository on the bot's next run, ahead of any release of this package.
