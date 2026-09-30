@@ -279,12 +279,25 @@ final class PackageStandardTest extends TestCase
         self::assertArrayHasKey('extends', $preset);
     }
 
-    public function testSyncingDropsTheManagedWorkflowBlock(): void
+    public function testSyncingWritesTheShippedWorkflow(): void
     {
         $result = (new SyncTester())->sync($this->config());
 
-        self::assertArrayHasKey('./.github/workflows/standards.yml', $result);
-        self::assertStringContainsString('ortho-code', $result['./.github/workflows/standards.yml']);
+        self::assertSame(file_get_contents(__DIR__ . '/../templates/package/ci-standards.yml'), $result['./.github/workflows/standards.yml']);
+    }
+
+    // Both workflows shipped as blocks labelled ortho-code before, so the label each rule takes over must be that one.
+    public function testSyncingTakesOverTheWorkflowsTheStandardShippedAsBlocks(): void
+    {
+        $result = (new SyncTester())->sync($this->config(), [
+            './.github/workflows/standards.yml' => self::shippedAsBlock('package/ci-standards.yml'),
+            './.github/workflows/release.yml' => self::shippedAsBlock('package/ci-release.yml'),
+        ]);
+
+        foreach (['./.github/workflows/standards.yml', './.github/workflows/release.yml'] as $workflow) {
+            self::assertStringNotContainsString('ortho-code', $result[$workflow]);
+            self::assertMatchesRegularExpression('~^ +id: checkout$~m', $result[$workflow]);
+        }
     }
 
     // The workflow calls the script by name and nothing in the engine ties them together, so a rename would leave CI running nothing.
@@ -315,12 +328,11 @@ final class PackageStandardTest extends TestCase
         self::assertStringContainsString(sprintf('composer %s', $tests->name()), $result['./.github/workflows/standards.yml']);
     }
 
-    public function testSyncingDropsTheManagedReleaseWorkflowBlock(): void
+    public function testSyncingWritesTheShippedReleaseWorkflow(): void
     {
         $result = (new SyncTester())->sync($this->config());
 
-        self::assertArrayHasKey('./.github/workflows/release.yml', $result);
-        self::assertStringContainsString('ortho-code', $result['./.github/workflows/release.yml']);
+        self::assertSame(file_get_contents(__DIR__ . '/../templates/package/ci-release.yml'), $result['./.github/workflows/release.yml']);
         // The notes are the changelog section for the tag, so the workflow must read that file.
         self::assertStringContainsString('CHANGELOG.md', $result['./.github/workflows/release.yml']);
     }
@@ -413,6 +425,14 @@ final class PackageStandardTest extends TestCase
         } while ($path !== '.');
 
         return false;
+    }
+
+    /** A workflow as the standard shipped it before it held workflows to containment: the template without its step ids, inside the ortho-code block. */
+    private static function shippedAsBlock(string $template): string
+    {
+        $workflow = (string) preg_replace('~^( *)- id: \S+\n *~m', '$1- ', (string) file_get_contents(__DIR__ . '/../templates/' . $template));
+
+        return "# >>> ortho-code - managed >>>\n" . $workflow . "# <<< ortho-code <<<\n";
     }
 
     private function config(): SyncConfig

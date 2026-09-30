@@ -14,6 +14,7 @@ use OrthoCode\StandardsSync\Rules\Composer\Requirement\VersionConstraint;
 use OrthoCode\StandardsSync\Rules\Composer\Script\ComposerScript;
 use OrthoCode\StandardsSync\Rules\Ecs\BaseSet\EcsBaseSet;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\Label;
+use OrthoCode\StandardsSync\Rules\GitHub\Workflow\GitHubWorkflow;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\ManagedBlock;
 use OrthoCode\StandardsSync\Rules\PhpStan\IncludedRuleset\PhpStanIncludedRuleset;
 use OrthoCode\StandardsSync\Rules\PhpStan\MinLevel\PhpStanLevel;
@@ -163,10 +164,10 @@ final class PackageStandard extends Standard
     /** A tag-driven release whose notes are the CHANGELOG section for that tag. The changelog itself stays each repository's own prose — the standard ships the mechanism, not the content. */
     private function enforceRelease(Package $package): void
     {
-        $this->addRule(new ManagedBlock(
+        $this->addRule(new GitHubWorkflow(
             target: FileTarget::fromString('.github/workflows/release.yml'),
-            label: Label::fromString(self::LABEL),
-            content: $package->read('package/ci-release.yml'),
+            workflow: $package->read('package/ci-release.yml'),
+            replacesBlock: Label::fromString(self::LABEL),
         ));
     }
 
@@ -183,10 +184,10 @@ final class PackageStandard extends Standard
         $this->addRule(new ComposerScript(name: 'app-sync-check', commands: ['standards-sync sync --check']));
         $this->addRule(new ComposerScript(name: 'app-checks', commands: ['@app-sync-check', '@app-ecs', '@app-phpstan', '@app-psalm', '@app-rector', '@app-run-tests']));
         // The workflow calls app-checks by name and nothing in the engine ties the two together, so the suite pins it.
-        $this->addRule(new ManagedBlock(
+        $this->addRule(new GitHubWorkflow(
             target: FileTarget::fromString('.github/workflows/standards.yml'),
-            label: Label::fromString(self::LABEL),
-            content: $package->read('package/ci-standards.yml'),
+            workflow: $package->read('package/ci-standards.yml'),
+            replacesBlock: Label::fromString(self::LABEL),
         ));
     }
 }

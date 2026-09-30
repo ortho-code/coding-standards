@@ -518,3 +518,41 @@ Measured on the engine, it judged 2 of the 13 Composer dependencies Renovate loo
 Renovate judges abandonment only when a package's highest version is also its most recent release, and a package that lists a newer development branch, or still ships fixes for an older major, fails that test.
 It stays because it costs nothing and catches the case where the data is there.
 Packagist's own abandoned flag, which a package's maintainer sets, is the more reliable signal; `composer audit` reports it, and nothing in the standard runs that command.
+
+## Agreed 2026-09-30 — the GitHub workflows are held to containment
+
+### The shipped GitHub workflows are `GitHubWorkflow` rules, not managed blocks
+
+This supersedes the managed blocks of [CI: a separate workflow the standard owns](#ci-a-separate-workflow-the-standard-owns), [Release: the mechanism is shared, the prose is not](#release-the-mechanism-is-shared-the-prose-is-not) and the GitHub half of [CI is a forge companion, not part of the tier](#ci-is-a-forge-companion-not-part-of-the-tier); the Bitbucket companion's pipeline stays a block, since the engine has no Bitbucket family.
+Engine 0.4 holds a workflow to containment: every key, job, step and value the template declares must be in the repository's file, and the repository may add its own steps, inputs, triggers and jobs; action references and runner labels are minimums.
+A managed block owned the whole file, so a repository could add nothing to the declared job, and a bot's action or runner update to a synced copy failed `sync --check` until a release of this standard carried the same update, which tied every repository's CI to this package's release cycle.
+Now such an update passes as it is, and a repository that needs a service, a cache or an extension adds it to the declared job.
+Declared values stay exact, and `php-version: '8.5'` is the floor the manifest declares, so a matrix over PHP versions goes in a job of the repository's own beside the declared one.
+The target stays `.github/workflows/standards.yml`, so a repository's own CI keeps its own file; the 2026-08-28 entry rejected a block inside a consumer's workflow for a block's reason, which containment removes, but nothing asks for the move.
+*Rejected*: keeping the blocks and treating a bot's failing pull request as the signal that a release is due, the roadmap's earlier answer — it leaves every repository on this package's release cycle.
+
+### Every template step carries an `id`
+
+The engine identifies a declared step by its `id`, since a step's `name` is optional and not unique.
+The ids name what each step does: `checkout`, `setup-php`, `install`, then `checks`, or `tests` in the package tier's `lowest` job; and `checkout`, `release` in the release job.
+They stand first in each step, where they read as its name.
+A repository that synced a block before has its steps adopted on the first sync, which adds each id as the step's last key; key order means nothing to GitHub.
+*Rejected*: ids last in the templates, to match what adoption writes — the template is what a new repository gets and what the maintainer reads.
+
+### The first sync takes over the old blocks
+
+Each rule names `ortho-code` as the block it replaces, so the first sync on this release removes that block's two marker lines, keeps the content, and adds the step ids.
+Tests pin that label against each workflow in its earlier form, since the label and the takeover state the same thing twice.
+Measured in this repository, against the engine's working copy and again against the released 0.4.0: the first sync removed the markers from both workflows, added ten ids, and every check passed.
+The takeover stays until a release raises the engine requirement again ([roadmap](roadmap.md)); it costs nothing once no block is left to find.
+
+### This release requires engine `^0.4`, and is 0.4.0
+
+The engine line moves, and the first sync on it rewrites the workflows and records them and the tool imports in `standards-sync.lock`, so the first `sync --check` after upgrading fails until that sync is committed.
+As 0.4.0, a repository on `^0.3` stays on 0.3.3 and engine 0.3 until it raises its own constraint, and chooses when that churn lands.
+*Rejected*: 0.3.4, which reaches every library without a pull request, as 0.3.1 and 0.3.3 did, and turns its CI red on the next push.
+
+### What else this settles
+
+The roadmap's reusable-workflow item goes: the step that is not a check-script command, which had no route but a second workflow file, is now a step the repository adds to the declared job.
+GitHub Actions digest pinning no longer waits on how managed blocks take updates, since a digest pin whose comment names the declared version or later holds it; whether the preset pins digests is its own open item.

@@ -19,7 +19,14 @@ return SyncConfig::create()
 
 ## What `PackageStandard` ships
 
-**Managed blocks**, distributed under the label `ortho-code`: `.editorconfig`, `.gitignore`, `.gitattributes`, a `standards.yml` workflow running the checks, and the tests again at the lowest dependency versions the manifest allows, on every push and pull request, and a tag-driven `release.yml` whose notes are the `CHANGELOG.md` section for that tag. On a repository's first sync each block is appended, keeping whatever the file already held; afterwards only the inside of the block is rewritten, so everything outside it stays the repository's own. The changelog itself is never synced — the standard ships the release mechanism, each repository writes its own prose. Write each entry under `## Unreleased` as its change lands, and rename that heading to the version when cutting the release: the workflow publishes only the section headed with the tag's version, and fails rather than publishing empty notes when there is none.
+**Managed blocks**, distributed under the label `ortho-code`: `.editorconfig`, `.gitignore` and `.gitattributes`.
+On a repository's first sync each block is appended, keeping whatever the file already held; afterwards only the inside of the block is rewritten, so everything outside it stays the repository's own.
+
+**Workflows a repository may add to**: a `standards.yml` workflow running the checks, and the tests again at the lowest dependency versions the manifest allows, on every push and pull request, and a tag-driven `release.yml` whose notes are the `CHANGELOG.md` section for that tag.
+Every job, step and value they declare must be in the repository's workflow, and the repository may add its own steps, inputs, triggers and jobs; action and runner versions are minimums, so a newer one a bot proposes stays.
+A workflow still carrying the `ortho-code` block of an earlier release loses its two marker lines on the first sync and keeps its content.
+The changelog itself is never synced — the standard ships the release mechanism, each repository writes its own prose.
+Write each entry under `## Unreleased` as its change lands, and rename that heading to the version when cutting the release: the workflow publishes only the section headed with the tag's version, and fails rather than publishing empty notes when there is none.
 
 **Export-ignore lines**, in the `.gitattributes` block, so the copy composer installs leaves out what only development needs: every file the standard syncs, under every name the engine accepts for it, the sync config and lock, `tests/`, and Claude Code's project files (`.claude/`, `CLAUDE.md`, `.mcp.json`). Anything else ships unless the library adds its own line outside the block, such as `/docs export-ignore`. To ship a listed file after all, write `/<path> -export-ignore` *below* the block, since git applies the later line; a first sync appends the block to an existing `.gitattributes`, so an override already there has to move below it.
 
@@ -29,7 +36,7 @@ return SyncConfig::create()
 
 **Renovate** extends the shared preset in this repository (`renovate-package-preset.json`), reached as `local>ortho-code/coding-standards:renovate-package-preset`. It waits until a release is a week old before proposing it, widens a runtime requirement for a new major (`^8.1` becomes `^8.1 || ^9.0`) rather than replacing it, marks a dependency with no release for a year as abandoned on the dashboard, and leaves the `php` requirement to the standard. Dropping an old major stays a manual edit: make it when your code needs the new major, which the `lowest` job reports by failing, or when the old major stops receiving security fixes.
 
-**And the enforcement that makes it real**, since synced config enforces nothing on its own: the PHP version and every tool the standard configures are required in the consumer's `composer.json`, an `app-checks` script runs them all plus `standards-sync sync --check`, and the managed workflow calls that script. A repository that drifts fails its own CI rather than drifting quietly.
+**And the enforcement that makes it real**, since synced config enforces nothing on its own: the PHP version and every tool the standard configures are required in the consumer's `composer.json`, an `app-checks` script runs them all plus `standards-sync sync --check`, and the shipped workflow calls that script. A repository that drifts fails its own CI rather than drifting quietly.
 
 ## What `ProjectStandard` ships
 
@@ -54,7 +61,7 @@ return SyncConfig::create()->withRuleSet(new PackageStandard());
 ```
 
 Then `vendor/bin/standards-sync sync` applies the standard, and `sync --check` reports drift without writing. Both are available as `composer app-sync` and `composer app-sync-check` once the standard has been applied.
-The sync also writes `standards-sync.lock` beside the config, recording the script commands the standard declared; commit it, because a later sync reads it to remove a command the standard stops declaring.
+The sync also writes `standards-sync.lock` beside the config, recording the script commands, tool imports and workflow parts the standard declared; commit it, because a later sync reads it to remove one the standard stops declaring.
 
 **Adopting over scripts you already have.** A script the standard declares keeps any command a repository added to it, so a repository that already had, say, an `app-phpstan` of its own keeps that command after the standard's: `["phpstan analyse", "php vendor/bin/phpstan --memory-limit=256M"]` runs the analyser twice. After the first sync, review the `scripts` in `composer.json` and delete your own line wherever it runs the same tool as the standard's; the drift report names every line it kept.
 

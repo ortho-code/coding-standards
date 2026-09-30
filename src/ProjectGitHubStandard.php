@@ -8,7 +8,7 @@ use OrthoCode\StandardsSync\Authoring\Package;
 use OrthoCode\StandardsSync\Authoring\Standard;
 use OrthoCode\StandardsSync\Core\Rule\FileTarget;
 use OrthoCode\StandardsSync\Rules\General\ManagedBlock\Label;
-use OrthoCode\StandardsSync\Rules\General\ManagedBlock\ManagedBlock;
+use OrthoCode\StandardsSync\Rules\GitHub\Workflow\GitHubWorkflow;
 use Override;
 
 /**
@@ -23,10 +23,10 @@ final class ProjectGitHubStandard extends Standard
     protected function enforce(Package $package): void
     {
         // The workflow calls app-checks by name and nothing in the engine ties the two together, so the suite pins it.
-        $this->addRule(new ManagedBlock(
+        $this->addRule(new GitHubWorkflow(
             target: FileTarget::fromString('.github/workflows/standards.yml'),
-            label: Label::fromString(self::LABEL),
-            content: $package->read('project/ci-standards.yml'),
+            workflow: $package->read('project/ci-standards.yml'),
+            replacesBlock: Label::fromString(self::LABEL),
         ));
     }
 }

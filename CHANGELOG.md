@@ -4,6 +4,12 @@ What changed in each release, for the repositories that adopt this standard.
 
 ## Unreleased
 
+**The GitHub workflows are no longer managed blocks.** `standards.yml` and `release.yml` from `PackageStandard`, and `standards.yml` from `ProjectGitHubStandard`, now only have to contain what the standard declares: every job, step and value in them must be there, and you may add your own steps, inputs, triggers and jobs, which stay.
+Action and runner versions are minimums, so a newer one a bot proposes passes `sync --check` as it is.
+Every step the standard declares now has an `id`; a step you add needs none, but one of yours carrying an id the standard uses in that job is taken as the standard's step.
+The first sync removes the `ortho-code` block's two marker lines, keeps the content, and gives each of the standard's steps its id, so the first `sync --check` after upgrading fails until you run `sync` once and commit the workflows and `standards-sync.lock`.
+This release requires `ortho-code/standards-sync` `^0.4`, whose lock also records the tool imports; raise your constraint on this package to `^0.4` to take it.
+
 The shared Renovate preset now widens a runtime requirement when a new major appears, so `^8.1` becomes `^8.1 || ^9.0` instead of `^9.0`, and projects still on the old major can keep taking your releases; `require-dev` is unchanged.
 Dropping the old major stays your edit: make it when your code needs the new one, which the `lowest` job reports by failing, or when the old major stops receiving security fixes.
 The preset change reaches your repository on the bot's next run, ahead of any release of this package.

@@ -87,23 +87,27 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   No phase ever landed it, which is why it appears here rather than in the decision record.
   Trigger: none needed — it is a family to pick up, and the upgrade path if shared layers ever appear is the engine's import rule pointing at a shared template.
 
-- **The CI block owns the whole file, and the runtime image is where that bites.**
-  Both forge companions ship CI as a managed block, and a single-document YAML block effectively owns its file — so the one thing an application is most likely to need to change is the one thing it cannot: the runtime image and the extensions built into it. The shipped Bitbucket pipeline runs a bare PHP image, which is enough to run the checks and not enough for an application needing `ext-intl` or its like, and such a repository's only route today is disabling the rule wholesale.
-  This is the **second** instance of the same engine gap the reusable-workflow item below records, now in a place where the variation is a hard requirement rather than a convenience.
-  Directions are the engine's to choose (named insertion points, per-target composition, or shipping a callable workflow consumers wrap); until one lands, an application whose CI needs more than the block gives writes its own pipeline and does not declare the forge companion.
+- **The Bitbucket CI block owns the whole file, and the runtime image is where that bites.**
+  The Bitbucket companion ships CI as a managed block, and a single-document YAML block effectively owns its file — so the one thing an application is most likely to need to change is the one thing it cannot: the runtime image and the extensions built into it. The shipped Bitbucket pipeline runs a bare PHP image, which is enough to run the checks and not enough for an application needing `ext-intl` or its like, and such a repository's only route today is disabling the rule wholesale.
+  The GitHub workflows had the same gap and lost it in 0.4.0, when the engine began holding them to containment ([decision](decisions.md#the-shipped-github-workflows-are-githubworkflow-rules-not-managed-blocks)); the same answer for Bitbucket Pipelines is an engine rule family of its own, and until one lands, an application whose CI needs more than the block gives writes its own pipeline and does not declare the forge companion.
   Trigger: the first application whose runtime the shipped image cannot provide.
 
-- **Renovate, four things left open.**
+- **Renovate, five things left open.**
   The Renovate app runs on this repository and the engine's since 2026-09-30, and opens its updates as pull requests.
 
   *Preset indirection versus syncing the rules directly.* Writing the rules into each consumer's own renovate config rather than pointing at a shared preset is the preferred direction; both work, and they differ in when a change propagates. A preset changes for every consumer the moment the bot next runs, with no sync and no pull request; synced rules need a sync per repository but need no forge fetch and are readable in the repository. Doing it needs a new engine rule family — nothing today writes arbitrary renovate settings, only the `extends` entry.
 
-  *Updates to a consumer's managed blocks.*
-  The bot reads a consumer's synced workflows like any other, so an action or runner update there arrives as a pull request that fails `sync --check`, because a managed block changes only through a release of this package.
+  *Updates to a consumer's Bitbucket pipeline block.*
+  The bot reads a consumer's synced pipeline like any other, so an image update there arrives as a pull request that fails `sync --check`, because a managed block changes only through a release of this package.
   Either the preset disables those updates for the files the standard manages, which ties the preset to the templates' destination paths, or the failing pull request stays as the signal that a release is due.
   The failing pull request is the preferred answer, to be checked against the first one: once the release it waits for is out, its edit should be exactly what a sync writes, which makes merging it the consumer's sync.
-  GitHub Actions digest pinning waits on this item, since it would turn every release inside a pinned major into such a pull request.
+  The GitHub workflows left this item in 0.4.0: their action and runner versions are minimums, so the bot's update passes as it is.
   Trigger: the first such pull request.
+
+  *GitHub Actions digest pinning.*
+  Renovate's `helpers:pinGitHubActionDigests` would pin every action to a commit with its version in a comment, which the engine reads as that version, so a pinned workflow still holds the declared one and a bot's digest update passes.
+  It waited on how managed blocks take updates, which no longer applies; what is open is whether the package preset asks for it.
+  Trigger: none needed — a preset decision to take.
 
   *A release that changes synced content.*
   How it reaches a consumer depends on the lock.
@@ -125,20 +129,18 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Seeding one has no rule today: the engine's one-shot seeds are all tool-specific, and a managed block is wrong for a file of human prose that must not carry markers.
   Trigger: a second repository where starting the changelog by hand is friction rather than a one-line chore.
 
-- **Ship the CI workflow as a *reusable* workflow.**
-  Today `standards.yml` is a block running `app-checks` and nothing else.
-  Since 0.3 a repository can add its own command to `app-checks` and the standard keeps it, so an extra check that is a command already runs in that job.
-  What still has no route is a step that is not a command in the check script, such as a service container, a cache or a second job: the repository adds a second workflow file beside the block, or disables the rule wholesale.
-  A reusable workflow — the standard ships the callable one, each repository's thin workflow calls it and adds its steps — gives the variation without touching the engine.
-  The general form of the problem is an engine concern and recorded there: a managed block has no extension point, which only goes unnoticed in line-oriented files where concatenation is composition.
-  Trigger: the second repository that wants a CI step that is not a check-script command.
-
 - **Moving a template is free once consumers run engine 0.4.**
   Templates live under `templates/package/` so that shared files can take `templates/shared/` at extraction time.
   The ECS set, the Rector set and the PHPStan ruleset render their path into the consumer's own config, and on engine 0.3 sync adds without retracting, so a move leaves a stale entry beside the new one in every consumer, as the preset rename did.
   From engine 0.4 every tool import is a list contribution: the consumer's `standards-sync.lock` records the path, and the next sync replaces a moved one in place.
   The lock retracts only what it recorded, so consumers must sync once on 0.4 before a release moves any template; a release that moves a template and first requires `^0.4` leaves the old entry behind.
-  Trigger: engine 0.4.0, released before the extraction for exactly this reason.
+  This package's 0.4.0 is the release that first requires `^0.4`, and moves no template for that reason.
+  Trigger: consumers synced on 0.4.0, which is why it is released before the extraction; a release after it may move a template.
+
+- **Dropping the takeover of the old workflow blocks.**
+  The GitHub workflow rules name `ortho-code` as the block they replace, so a repository synced on 0.3 loses the block's markers on its first sync on 0.4.
+  Once no consumer can still arrive from a block, the argument is dead weight, though harmless.
+  Trigger: the first release that raises the engine requirement again.
 
 - **`ProjectStandard` and composer's `allow-plugins`.**
   The tier requires `slevomat/coding-standard`, which depends on the composer plugin `dealerdirect/phpcodesniffer-composer-installer`, and composer runs no plugin that `allow-plugins` does not name: an interactive install asks, a non-interactive one fails until the project allows or denies it.
