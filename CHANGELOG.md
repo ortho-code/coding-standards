@@ -2,7 +2,7 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
-## Unreleased
+## 0.4.0 — 2026-10-01
 
 **The GitHub workflows are no longer managed blocks.** `standards.yml` and `release.yml` from `PackageStandard`, and `standards.yml` from `ProjectGitHubStandard`, now only have to contain what the standard declares: every job, step and value in them must be there, and you may add your own steps, inputs, triggers and jobs, which stay.
 Action and runner versions are minimums, so a newer one a bot proposes passes `sync --check` as it is.
