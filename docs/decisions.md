@@ -488,3 +488,23 @@ Without a lock, the checks only ever run against the newest versions inside each
 Measured on this repository and the engine: both suites pass at their lowest versions — PHPUnit 13.0.0, Psalm 6.15.1, Symfony 8.1.0, `composer/semver` 3.4.0, and each other at 0.3.0 — and running ECS there is what found the floor corrected above.
 A test pins the script name the job calls, as one already did for the checks.
 *Rejected*: the whole `app-checks` at the lowest versions — the lowest analysers test the toolchain rather than the library: the sync check fails against an older release of this standard, and Psalm 6.15.1 crashes on PHP 8.5 loading the oldest `amphp` release its constraints allow.
+
+## Agreed 2026-09-30 — the preset widens a library's runtime constraints
+
+### A new major of a runtime dependency widens the constraint
+
+Composer installs one version of each package per project, so a library's `require` constraints limit every project that installs it.
+The preset sets `rangeStrategy: widen` for Composer's `require`, so a new major arrives as `^8.1 || ^9.0` rather than `^9.0`: a project still on the old major can take the library's next release, and so can one on the new major.
+`require-dev` keeps Renovate's default, since it never reaches the projects that install a library.
+A lookup dry run confirmed both: `symfony/console ^7.0` became `^7.0 || ^8.0` where the previous preset wrote `^8.0`, `ortho-code/standards-sync ^0.2` became `^0.2 || ^0.3`, and `phpunit/phpunit ^12` in `require-dev` still became `^13`.
+The [lowest job](#a-second-job-runs-the-tests-at-the-lowest-versions-the-manifest-allows) is what keeps a widened constraint honest: the checks run against the newest versions and the lowest job against the oldest, so both ends of the range are tested, though not the versions between them.
+Widening had to wait for that job, since a preset change reaches every consumer the moment it lands.
+*Rejected*: replacing, Renovate's default — it drops the old major for every project that installs the library, whether or not the library needs anything from the new one.
+
+### Dropping an old major is done by hand
+
+`widen` only ever adds a major, so narrowing a constraint is always the maintainer's edit, and there are three reasons to make it.
+The code needs something only the new major has: the lowest job enforces this one, because the pull request that first uses it fails there, and that pull request raises the constraint.
+The old major loses upstream support: keeping it lets projects install a version that no longer receives security fixes, so it goes, usually the next time the constraint is touched anyway.
+Supporting both majors costs more than it is worth: when staying compatible needs code that papers over the differences between them, the old major goes instead.
+What widening costs follows from the first reason: until the old major is dropped, the code has to keep working on that major's lowest version.

@@ -26,6 +26,16 @@
       "minimumReleaseAge": null
     },
     {
+      "description": "A library's runtime constraint limits every project that installs it, so a new major widens the constraint rather than replacing it.",
+      "matchManagers": [
+        "composer"
+      ],
+      "matchDepTypes": [
+        "require"
+      ],
+      "rangeStrategy": "widen"
+    },
+    {
       "description": "The PHP floor is the standard's decision and moves in a release of it.",
       "matchManagers": [
         "composer"

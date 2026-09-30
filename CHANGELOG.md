@@ -2,6 +2,12 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## Unreleased
+
+The shared Renovate preset now widens a runtime requirement when a new major appears, so `^8.1` becomes `^8.1 || ^9.0` instead of `^9.0`, and projects still on the old major can keep taking your releases; `require-dev` is unchanged.
+Dropping the old major stays your edit: make it when your code needs the new one, which the `lowest` job reports by failing, or when the old major stops receiving security fixes.
+The preset change reaches your repository on the bot's next run, ahead of any release of this package.
+
 ## 0.3.3 — 2026-09-30
 
 The shared Renovate preset now waits until a release is seven days old before proposing it, opens a pull request when Renovate renames an option your config uses, and no longer proposes changes to your `php` requirement, which the standard owns.
