@@ -413,3 +413,23 @@ This repository's own `renovate.json5` adds `/^templates/.+\.ya?ml$/` to that ma
 An extract-only dry run confirmed it: the manager found the three GitHub templates and every action in them, and nothing in the Bitbucket one.
 The pattern is anchored to the root, so a nested `templates/` directory, such as a test fixture's, never matches.
 *Rejected*: the pattern in the shared preset — every consumer would read its own `templates/`, which in a Symfony application holds Twig, and a consumer receives these updates through a release and a sync, never from the bot.
+
+## Agreed 2026-09-30 — the shipped workflows' actions and runner
+
+### Actions move to their Node 24 majors
+
+The CI run of 2026-09-30 warned that `actions/checkout@v4`, and the `actions/cache` v4.2.4 that `ramsey/composer-install` 3.x pins inside itself, still target Node.js 20, which GitHub has deprecated and already forces onto Node 24.
+Every GitHub workflow the standard ships now uses `actions/checkout@v7` and `ramsey/composer-install@v4`; `shivammathur/setup-php@v2` already runs on Node 24 and stays.
+`checkout` moved to Node 24 in v5, v6 persists its credentials to a file of their own, and v7 refuses to check out a fork's pull request under `pull_request_target` and `workflow_run` — none of which the shipped workflows touch, and the release job authenticates `gh` with the job token rather than git's credentials.
+`composer-install` 4.0.0 changes one thing, its cache to `actions/cache` v5 on Node 24; the major bump is for self-hosted runners, which need runner 2.327.1, and the shipped workflows name a GitHub-hosted label.
+*Rejected*: `checkout@v5`, the smallest step off Node 20 — it leaves the standard two majors behind on the day it moves, for no change the workflows would notice.
+
+### The runner label is pinned, to `ubuntu-26.04`
+
+`ubuntu-latest` moves to Ubuntu 26.04 between 2026-10-19 and 2026-11-19, and the shipped workflows now name `ubuntu-26.04` rather than float on the label.
+Renovate updates a pinned runner label to the newest one GitHub marks stable and leaves `ubuntu-latest` alone, so with the bot running a pin costs one pull request per Ubuntu LTS and makes each move a release of this standard, tried in its own CI before any consumer syncs it.
+The jobs need nothing from the image beyond what `setup-php` installs, and `setup-php` supports 26.04, where PHP 8.5 is preinstalled.
+*Rejected*: keeping `ubuntu-latest` — the right call while no bot ran, since a pin nobody updates ages silently until the image is retired; the bot removed that cost.
+*Rejected*: pinning `ubuntu-24.04` — it only postpones the same move to that image's retirement.
+
+⚠ The application tier's PHP 8.2 on 26.04 is untried: no CI this standard owns runs the project tier's GitHub companion, so the first application declaring it is the first run.

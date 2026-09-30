@@ -10,6 +10,10 @@ The block is appended to an existing `.gitattributes`, so export-ignore lines yo
 Anything else your library should leave out of its installs stays a line of your own below the block, such as `/docs export-ignore`.
 This package's own installs now carry only `src/`, `templates/`, the manifest, the licence, the readme and this changelog.
 
+The GitHub workflows of `PackageStandard` and `ProjectGitHubStandard` now run on `ubuntu-26.04` instead of `ubuntu-latest`, with `actions/checkout@v7` and `ramsey/composer-install@v4`, so no action in them runs on the deprecated Node.js 20.
+The first `sync --check` after upgrading fails until you run `sync` once and commit the workflows it rewrites.
+The Bitbucket pipeline is unchanged.
+
 ## 0.3.0 — 2026-09-29
 
 **Requires `ortho-code/standards-sync` 0.3.** A composer script the standard declares now keeps any command your repository added to it, and a later sync removes a command the standard stops declaring.

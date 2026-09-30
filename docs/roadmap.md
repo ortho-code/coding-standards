@@ -5,12 +5,6 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 
 ## Open now
 
-- **The shipped GitHub workflows' action versions and runner label.**
-  The CI run of 2026-09-30 warned that `actions/checkout@v4`, and an `actions/cache` our templates do not name — most likely pulled in by `ramsey/composer-install@v3` — target Node.js 20, which GitHub has deprecated and already forces onto Node 24; and that `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19.
-  Every GitHub workflow the standard ships carries them — the package tier's `ci-standards.yml` and `ci-release.yml` and the project tier's GitHub companion — so the fix is a template change each consumer syncs; the Bitbucket pipeline is unaffected.
-  Nothing fails today, and which versions to move to, and what the new image changes for `setup-php`, is not researched yet.
-  Trigger: before 2026-10-19, when the runner label moves.
-
 - **`armin/editorconfig-cli`, the family that makes the synced `.editorconfig` enforced rather than advisory.**
   Researched 2026-08-29 and **deferred on priority, not on doubt**: the design below is settled and measured, and the work is a normal family tranche whenever it is picked up.
 
