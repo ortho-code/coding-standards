@@ -7,6 +7,9 @@ What changed in each release, for the repositories that adopt this standard.
 The shared Renovate preset now waits until a release is seven days old before proposing it, opens a pull request when Renovate renames an option your config uses, and no longer proposes changes to your `php` requirement, which the standard owns.
 A preset change reaches your repository on the bot's next run, ahead of any release of this package.
 
+`PackageStandard` now requires ECS `^13.3.2`, raised in your `composer.json` on the next sync: the shared set has loaded ECS's `SetList::PER_CS` since 0.2.2, and ECS 13.3.0 and 13.3.1 lack that constant, so `ecs check` stopped with an undefined constant on either.
+Run `composer update symplify/easy-coding-standard` afterwards if your lock still holds one of them.
+
 ## 0.3.2 — 2026-09-30
 
 `PackageStandard` now requires PHPUnit `^13`, raised in your `composer.json` on the next sync; run `composer update phpunit/phpunit` afterwards if your lock still holds 12.

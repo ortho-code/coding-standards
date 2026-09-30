@@ -109,8 +109,8 @@ final class PackageStandard extends Standard
     private function enforceEcs(Package $package): void
     {
         $this->addRule(new EcsBaseSet(set: $package->path('package/ecs.php')));
-        // The shared set's perCs prepared set first exists in 13.3.
-        $this->addRule(new ComposerRequirement(package: 'symplify/easy-coding-standard', constraint: VersionConstraint::fromString('^13.3')));
+        // The shared set's SetList::PER_CS first exists in 13.3.2.
+        $this->addRule(new ComposerRequirement(package: 'symplify/easy-coding-standard', constraint: VersionConstraint::fromString('^13.3.2')));
         $this->addRule(new ComposerScript(name: 'app-ecs', commands: ['ecs check']));
         $this->addRule(new ComposerScript(name: 'app-ecs-fix', commands: ['ecs check --fix']));
     }

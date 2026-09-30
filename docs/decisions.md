@@ -472,3 +472,9 @@ In a library the wait applies to majors only, the one kind of Composer update th
 Re-examined against Renovate: without a lock, an analyser's minor release with new findings reaches a library's CI on its next push rather than as a pull request, and the week's wait never applies to it; a committed lock would turn those into pull requests.
 The package tier keeps ignoring `/composer.lock` all the same.
 Composer's own documentation notes that a library's lock has no effect on the projects that install it, and of twelve widely used PHP repositories only PHPUnit and `phpstan-src` commit one, both shipped as PHARs; the libraries installed as code — Symfony Console, Doctrine ORM, Laravel, Guzzle, Flysystem, `composer/semver`, PHP-Parser — and the sources of Rector and ECS commit none.
+
+## Corrected 2026-09-30 — the ECS floor is 13.3.2
+
+The [same-day correction of 2026-09-29](#correction-the-same-day-per-cs-has-to-load-after-the-prepared-sets) moved the shared set to `->withSets([SetList::PER_CS])` and left the floor at `^13.3`, but that constant first exists in ECS 13.3.2: checked against 13.3.0, 13.3.1 and 13.3.2, and on either of the first two `ecs check` stops with an undefined constant.
+The floor is now `^13.3.2`.
+Nothing had caught it because a library without a lock always installs the newest ECS inside the constraint; installing this package at its lowest allowed versions did.
