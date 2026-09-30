@@ -27,7 +27,7 @@ return SyncConfig::create()
 
 **Values a project cannot loosen.** PHPStan has a level floor of 6 and `treatPhpDocTypesAsCertain: false` rewritten on every sync. Psalm is seeded at `errorLevel="2"` with `findUnusedCode="false"`, and a looser level is tightened. PHPUnit is seeded and thirteen strictness flags are pinned, including the two PHPUnit already defaults to true, so the config states the whole contract rather than half of it. A seeded config is one-shot: it is written only where none exists and never edits an existing one — the template bootstraps, the pins converge.
 
-**Renovate** extends the shared preset in this repository (`renovate-package-preset.json`), reached as `local>ortho-code/coding-standards:renovate-package-preset`.
+**Renovate** extends the shared preset in this repository (`renovate-package-preset.json`), reached as `local>ortho-code/coding-standards:renovate-package-preset`. It waits until a release is a week old before proposing it, and leaves the `php` requirement to the standard.
 
 **And the enforcement that makes it real**, since synced config enforces nothing on its own: the PHP version and every tool the standard configures are required in the consumer's `composer.json`, an `app-checks` script runs them all plus `standards-sync sync --check`, and the managed workflow calls that script. A repository that drifts fails its own CI rather than drifting quietly.
 

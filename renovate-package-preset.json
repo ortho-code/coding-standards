@@ -5,5 +5,35 @@
   ],
   "labels": [
     "dependencies"
+  ],
+  "configMigration": true,
+  "minimumReleaseAge": "7 days",
+  "packageRules": [
+    {
+      "description": "A pin or digest update changes no version, so it need not wait.",
+      "matchUpdateTypes": [
+        "pin",
+        "pinDigest",
+        "digest"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "Some images publish no timestamp, which would hold their updates back for good.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "The PHP floor is the standard's decision and moves in a release of it.",
+      "matchManagers": [
+        "composer"
+      ],
+      "matchDepNames": [
+        "php"
+      ],
+      "enabled": false
+    }
   ]
 }

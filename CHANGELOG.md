@@ -2,6 +2,11 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
+## Unreleased
+
+The shared Renovate preset now waits until a release is seven days old before proposing it, opens a pull request when Renovate renames an option your config uses, and no longer proposes changes to your `php` requirement, which the standard owns.
+A preset change reaches your repository on the bot's next run, ahead of any release of this package.
+
 ## 0.3.2 — 2026-09-30
 
 `PackageStandard` now requires PHPUnit `^13`, raised in your `composer.json` on the next sync; run `composer update phpunit/phpunit` afterwards if your lock still holds 12.

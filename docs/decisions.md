@@ -453,3 +453,16 @@ This supersedes the floor in the [2026-08-28 entry](#phpunit-thirteen-strictness
 Measured in this repository and the engine on PHPUnit 13.3.6 beside Psalm 6.19.1: every check passes, and `phpunit --validate-configuration` accepts both configs, so all thirteen flags exist in 13. PHPUnit 13 needs PHP 8.4.1, below the tier's `^8.5`.
 With the move, every tool floor the tier declares sits on its current major.
 *Rejected*: keeping `^12` — as a floor it holds nobody back from 13, but with its reason gone it only leaves each library on the older major until it moves by itself.
+
+## Agreed 2026-09-30 — what the package preset asks of Renovate
+
+### A week's wait, config migration, and PHP left to the standard
+
+The preset now holds every update until its release is seven days old, opens a pull request when Renovate renames one of its own options, and never proposes a change to the `php` requirement.
+The wait is the supply-chain guard Renovate's upgrade guidance recommends, and it lets first-day bugs surface; with Renovate's default `internalChecksFilter`, no pull request opens before it has passed.
+A lookup dry run confirmed it: with PHPUnit 13.3.6 and Psalm 6.19.1 a day old, the preset proposed 13.3.4 and 6.18.0, the newest releases older than a week.
+Pin and digest updates change no version and skip the wait, and so do Docker images, since some publish no timestamp and Renovate's default `minimumReleaseAgeBehaviour` would then hold them back for good.
+In a library the wait applies to majors only, the one kind of Composer update the bot proposes without a lock; a release inside the constraints reaches the next CI run unwaited.
+`php` is the PHP floor, which the standard declares and moves; left to the bot, PHP 9 would arrive as `^8.5` → `^9.0` in every library, and that passes `sync --check`, since the requirement is a floor.
+*Rejected*: `config:best-practices` wholesale — its dev-dependency pinning matches npm's dependency types and not Composer's `require-dev`, its release-age preset is npm-only, and its lock file maintenance has no lock to maintain; what applies to a library is taken here piece by piece, and its GitHub Actions digest pinning waits on how a consumer's managed workflow blocks take updates ([roadmap](roadmap.md)).
+*Rejected*: holding major updates for approval on the dashboard — in a library they are the only updates the bot proposes, so it would hold everything.
