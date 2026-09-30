@@ -80,6 +80,18 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   What is not, and should stay per tier: the lock file in `.gitignore`, the export-ignore block in `.gitattributes`, which only a library needs, the PHP floor, the PHPStan level, the analyser set, and CI.
   Read the template-move item at the bottom of this file before starting — it constrains how the extraction may move files.
 
+- **Switching a consumer to another standard, unchecked.**
+  The case: a release raises something a consumer cannot follow yet, a PHP or PHPUnit floor say, so it needs a standard that keeps the old value — a `LegacyPackageStandard` or its like — and switches its `standards-sync.php` to that.
+  Nothing has checked what the engine does when a synced repository's declared standard changes, so whether that route works is open.
+  The engine's docs lead to four expectations, each still to verify against a consumer.
+  Value rules enforce floors and leave a stricter project alone, so a lower floor would not undo a bump the consumer already synced, and the consumer would revert it by hand.
+  The lock records list entries per file and list rather than per standard, so a successor declaring the same lists would retract what it drops and keep what it shares, while a list only the old standard contributed to is reported once and stays.
+  A managed block under the same label is replaced in place, and one under a new label lands beside the old one, which nothing retracts.
+  A GitHub workflow keeps what the project has beside the declared one, so steps only the old standard declared would stay as the project's.
+  How the legacy standard would be built is part of the question: `include()` of the current tier with the one value overridden works only if a later, lower floor wins over an earlier one, and `withoutRule()`, which would drop the rule outright, is not built, so otherwise it is a copy of the whole tier.
+  The route to weigh it against needs no new class: the consumer stays on the previous release through its composer constraint, at the cost of every other update.
+  Trigger: none needed — a check to run soon, and before the next release that raises a floor a consumer might not meet.
+
 ## Deferred, with recorded triggers
 
 - **Deptrac is agreed in shape and not shipped.**
