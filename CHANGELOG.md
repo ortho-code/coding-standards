@@ -2,7 +2,7 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
-## Unreleased
+## 0.3.2 — 2026-09-30
 
 `PackageStandard` now requires PHPUnit `^13`, raised in your `composer.json` on the next sync; run `composer update phpunit/phpunit` afterwards if your lock still holds 12.
 The synced `phpunit.xml` and its thirteen strictness flags are unchanged and valid under 13, but since the standard pins `failOnPhpunitDeprecation`, a test using an API that PHPUnit 13 deprecated now fails.
