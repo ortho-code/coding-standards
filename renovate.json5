@@ -1,5 +1,11 @@
 {
     "extends": [
         "local>ortho-code/coding-standards:renovate-package-preset" // ortho-code coding standards; sync re-adds this entry
-    ]
+    ],
+    // The workflows under .github/ are synced from these templates, so an action or runner update has to change both in one pull request.
+    "github-actions": {
+        "managerFilePatterns": [
+            "/^templates/.+\\.ya?ml$/"
+        ]
+    }
 }

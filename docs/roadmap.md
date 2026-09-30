@@ -92,11 +92,14 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   Directions are the engine's to choose (named insertion points, per-target composition, or shipping a callable workflow consumers wrap); until one lands, an application whose CI needs more than the block gives writes its own pipeline and does not declare the forge companion.
   Trigger: the first application whose runtime the shipped image cannot provide.
 
-- **Renovate, four things left open.**
+- **Renovate, five things left open.**
+  The Renovate app runs on the organisation since 2026-09-30, for every repository.
 
   *Preset indirection versus syncing the rules directly.* Writing the rules into each consumer's own renovate config rather than pointing at a shared preset is the preferred direction; both work, and they differ in when a change propagates. A preset changes for every consumer the moment the bot next runs, with no sync and no pull request; synced rules need a sync per repository but need no forge fetch and are readable in the repository. Doing it needs a new engine rule family — nothing today writes arbitrary renovate settings, only the `extends` entry.
 
-  *Bot plumbing.* A preset and an `extends` entry configure nothing until renovate actually runs: that means installing the Renovate app on the organisation, or self-hosting it on a schedule in a workflow. Organisation setup rather than repository config, and outside anything file sync can reach.
+  *Updates to a consumer's managed blocks.* The bot reads a consumer's synced workflows like any other, so an action or runner update there arrives as a pull request that fails `sync --check`, because a managed block changes only through a release of this package. Either the preset disables those updates for the files the standard manages, which ties the preset to the templates' destination paths, or the failing pull request stays as the signal that a release is due. Trigger: the first such pull request, which the engine repository gets while its managed workflows are behind these templates.
+
+  *A release that changes synced content.* It reaches a consumer as a composer update pull request, and nothing runs `sync` on that branch, so it fails `sync --check` until someone syncs on it. The hosted app runs only an undocumented set of approved commands after an upgrade; an open-source project can ask Mend to allowlist one, at Mend's discretion, and a self-hosted bot can run any. Trigger: the first release after 0.3.0 that changes synced content.
 
   *Grouping `require-dev` upgrades into one pull request* — less noise, at the cost of coupling unrelated upgrades.
 

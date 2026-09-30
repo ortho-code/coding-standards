@@ -402,3 +402,14 @@ A first sync appends the block to an existing `.gitattributes`, so an override a
 ### The application tier ships none of it
 
 An application is not installed as a dependency, so no archive of it ever reaches a `vendor/` directory.
+
+## Agreed 2026-09-30 — renovate over the shipped templates
+
+### This repository's renovate config reads `templates/`
+
+The Renovate app runs on the organisation since 2026-09-30.
+Its GitHub Actions manager reads only `.github/workflows/`, `.github/actions/`, `workflow-templates/` and `action.yml` by default, so the templates the shipped workflows are rendered from were invisible to it, and an update to a synced copy alone fails `sync --check`.
+This repository's own `renovate.json5` adds `/^templates/.+\.ya?ml$/` to that manager, so one pull request updates a template and its synced copy together.
+An extract-only dry run confirmed it: the manager found the three GitHub templates and every action in them, and nothing in the Bitbucket one.
+The pattern is anchored to the root, so a nested `templates/` directory, such as a test fixture's, never matches.
+*Rejected*: the pattern in the shared preset — every consumer would read its own `templates/`, which in a Symfony application holds Twig, and a consumer receives these updates through a release and a sync, never from the bot.
