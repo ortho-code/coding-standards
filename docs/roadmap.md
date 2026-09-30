@@ -50,6 +50,9 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
   | PHPUnit | `^9.6`, 8 flags | `^13`, all 13 | unmeasured — it cannot be measured from outside the repository |
   | Rector's PHP set | `PHP_82` | `PHP_85` | nil today: the `PHP_85` set fired on nothing |
 
+  PHP 8.2's security support ends on 2026-12-31; from then on the tier's floor, and the PHP both CI templates run, name a version that no longer receives fixes.
+  The PHPUnit row also rewrites the project template's `phpunit.xml` comment, which states that every element is valid in PHPUnit 9 and 12.
+
 - **Psalm in the application tier.**
   Not shipped, because the first consumer does not use it. The cost of adopting it is measured and small at the loose end: **31 findings at errorLevel 6 or 8, every one of them `MissingOverrideAttribute`**, which `psalm --alter --issues=MissingOverrideAttribute` fixes in one sweep — so errorLevel 6 is one command from clean.
   errorLevel 4 costs 9 more, errorLevel 2 costs 116 more (`ClassMustBeFinal` 30, `MissingConstructor` 20, `MissingClassConstType` 17, `PropertyNotSetInConstructor` 15).
