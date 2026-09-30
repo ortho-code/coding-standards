@@ -2,7 +2,7 @@
 
 What changed in each release, for the repositories that adopt this standard.
 
-## Unreleased
+## 0.3.1 — 2026-09-30
 
 `PackageStandard` now syncs a managed `.gitattributes` block that export-ignores what an installed copy of a library never needs: every file the standard syncs, under every name the engine accepts for it, `standards-sync.php` and `standards-sync.lock`, `tests/`, and a coding agent's project files — the README lists them all.
 The first `sync --check` after upgrading fails until you run `sync` once and commit the `.gitattributes` it writes.
