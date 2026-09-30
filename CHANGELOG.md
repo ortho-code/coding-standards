@@ -10,6 +10,9 @@ A preset change reaches your repository on the bot's next run, ahead of any rele
 `PackageStandard` now requires ECS `^13.3.2`, raised in your `composer.json` on the next sync: the shared set has loaded ECS's `SetList::PER_CS` since 0.2.2, and ECS 13.3.0 and 13.3.1 lack that constant, so `ecs check` stopped with an undefined constant on either.
 Run `composer update symplify/easy-coding-standard` afterwards if your lock still holds one of them.
 
+The GitHub workflow of `PackageStandard` gains a `lowest` job, which installs your dependencies at the lowest versions your `composer.json` allows and runs `app-run-tests`, so a constraint whose lower end no longer works fails your CI rather than your users' installs.
+The first `sync --check` after upgrading fails until you run `sync` once and commit the workflow it rewrites; if the new job then fails, raise the constraint it names to the version your code needs.
+
 ## 0.3.2 — 2026-09-30
 
 `PackageStandard` now requires PHPUnit `^13`, raised in your `composer.json` on the next sync; run `composer update phpunit/phpunit` afterwards if your lock still holds 12.

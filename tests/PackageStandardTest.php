@@ -301,6 +301,20 @@ final class PackageStandardTest extends TestCase
         self::assertStringContainsString(sprintf('composer %s', $aggregate->name()), $result['./.github/workflows/standards.yml']);
     }
 
+    // The lowest-versions job calls the test script by name, with the same exposure to a rename.
+    public function testTheWorkflowCallsTheTestScriptTheStandardDeclares(): void
+    {
+        $tests = array_find(
+            (new PackageStandard())->rules(),
+            static fn(Rule $rule): bool => $rule instanceof ComposerScript && $rule->name() === 'app-run-tests',
+        );
+        self::assertInstanceOf(ComposerScript::class, $tests);
+
+        $result = (new SyncTester())->sync($this->config());
+
+        self::assertStringContainsString(sprintf('composer %s', $tests->name()), $result['./.github/workflows/standards.yml']);
+    }
+
     public function testSyncingDropsTheManagedReleaseWorkflowBlock(): void
     {
         $result = (new SyncTester())->sync($this->config());

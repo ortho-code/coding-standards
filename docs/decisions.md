@@ -478,3 +478,13 @@ Composer's own documentation notes that a library's lock has no effect on the pr
 The [same-day correction of 2026-09-29](#correction-the-same-day-per-cs-has-to-load-after-the-prepared-sets) moved the shared set to `->withSets([SetList::PER_CS])` and left the floor at `^13.3`, but that constant first exists in ECS 13.3.2: checked against 13.3.0, 13.3.1 and 13.3.2, and on either of the first two `ecs check` stops with an undefined constant.
 The floor is now `^13.3.2`.
 Nothing had caught it because a library without a lock always installs the newest ECS inside the constraint; installing this package at its lowest allowed versions did.
+
+## Agreed 2026-09-30 — libraries test their lowest dependencies
+
+### A second job runs the tests at the lowest versions the manifest allows
+
+The package tier's workflow gains a `lowest` job beside the checks: it installs with `ramsey/composer-install`'s `dependency-versions: lowest`, which without a lock runs `composer update --prefer-lowest --prefer-stable`, and runs `app-run-tests`.
+Without a lock, the checks only ever run against the newest versions inside each constraint, so nothing showed that a constraint's lower end still works; a library whose code needs a newer minor than its constraint allows now fails this job instead of its users' installs.
+Measured on this repository and the engine: both suites pass at their lowest versions — PHPUnit 13.0.0, Psalm 6.15.1, Symfony 8.1.0, `composer/semver` 3.4.0, and each other at 0.3.0 — and running ECS there is what found the floor corrected above.
+A test pins the script name the job calls, as one already did for the checks.
+*Rejected*: the whole `app-checks` at the lowest versions — the lowest analysers test the toolchain rather than the library: the sync check fails against an older release of this standard, and Psalm 6.15.1 crashes on PHP 8.5 loading the oldest `amphp` release its constraints allow.
