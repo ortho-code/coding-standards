@@ -91,9 +91,18 @@ Why what exists is shaped the way it is belongs in the [decision record](decisio
 
   *Preset indirection versus syncing the rules directly.* Writing the rules into each consumer's own renovate config rather than pointing at a shared preset is the preferred direction; both work, and they differ in when a change propagates. A preset changes for every consumer the moment the bot next runs, with no sync and no pull request; synced rules need a sync per repository but need no forge fetch and are readable in the repository. Doing it needs a new engine rule family — nothing today writes arbitrary renovate settings, only the `extends` entry.
 
-  *Updates to a consumer's managed blocks.* The bot reads a consumer's synced workflows like any other, so an action or runner update there arrives as a pull request that fails `sync --check`, because a managed block changes only through a release of this package. Either the preset disables those updates for the files the standard manages, which ties the preset to the templates' destination paths, or the failing pull request stays as the signal that a release is due. Trigger: the first such pull request, which the engine repository gets while its managed workflows are behind these templates.
+  *Updates to a consumer's managed blocks.*
+  The bot reads a consumer's synced workflows like any other, so an action or runner update there arrives as a pull request that fails `sync --check`, because a managed block changes only through a release of this package.
+  Either the preset disables those updates for the files the standard manages, which ties the preset to the templates' destination paths, or the failing pull request stays as the signal that a release is due.
+  Trigger: the first such pull request.
 
-  *A release that changes synced content.* It reaches a consumer as a composer update pull request, and nothing runs `sync` on that branch, so it fails `sync --check` until someone syncs on it. The hosted app runs only an undocumented set of approved commands after an upgrade; an open-source project can ask Mend to allowlist one, at Mend's discretion, and a self-hosted bot can run any. Trigger: the first release after 0.3.0 that changes synced content.
+  *A release that changes synced content.*
+  How it reaches a consumer depends on the lock.
+  A library commits none, so a release inside its constraint arrives with no pull request at all: its next CI run installs the release and fails `sync --check` until someone syncs, and no bot setting changes that.
+  An application commits its lock, so the release arrives as a composer update pull request, and nothing runs `sync` on that branch, so it fails `sync --check` until someone syncs on it.
+  The hosted app runs only an undocumented set of approved commands after an upgrade; an open-source project can ask Mend to allowlist one, at Mend's discretion, and a self-hosted bot can run any.
+  0.3.1 was the first such release, and the engine repository was synced to it the same day.
+  Trigger: the first application that runs the bot and receives such a release.
 
   *Grouping `require-dev` upgrades into one pull request* — less noise, at the cost of coupling unrelated upgrades.
 
