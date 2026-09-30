@@ -466,3 +466,9 @@ In a library the wait applies to majors only, the one kind of Composer update th
 `php` is the PHP floor, which the standard declares and moves; left to the bot, PHP 9 would arrive as `^8.5` → `^9.0` in every library, and that passes `sync --check`, since the requirement is a floor.
 *Rejected*: `config:best-practices` wholesale — its dev-dependency pinning matches npm's dependency types and not Composer's `require-dev`, its release-age preset is npm-only, and its lock file maintenance has no lock to maintain; what applies to a library is taken here piece by piece, and its GitHub Actions digest pinning waits on how a consumer's managed workflow blocks take updates ([roadmap](roadmap.md)).
 *Rejected*: holding major updates for approval on the dashboard — in a library they are the only updates the bot proposes, so it would hold everything.
+
+### Libraries still commit no lock
+
+Re-examined against Renovate: without a lock, an analyser's minor release with new findings reaches a library's CI on its next push rather than as a pull request, and the week's wait never applies to it; a committed lock would turn those into pull requests.
+The package tier keeps ignoring `/composer.lock` all the same.
+Composer's own documentation notes that a library's lock has no effect on the projects that install it, and of twelve widely used PHP repositories only PHPUnit and `phpstan-src` commit one, both shipped as PHARs; the libraries installed as code — Symfony Console, Doctrine ORM, Laravel, Guzzle, Flysystem, `composer/semver`, PHP-Parser — and the sources of Rector and ECS commit none.
