@@ -8,6 +8,9 @@ The shared Renovate preset now widens a runtime requirement when a new major app
 Dropping the old major stays your edit: make it when your code needs the new one, which the `lowest` job reports by failing, or when the old major stops receiving security fixes.
 The preset change reaches your repository on the bot's next run, ahead of any release of this package.
 
+The preset also extends `abandonments:recommended`, so the dependency dashboard marks a dependency with no release for a year as abandoned.
+Renovate only judges a package whose highest version is also its most recent release, so one that still ships fixes for an older major, or lists a newer development branch, is never marked.
+
 ## 0.3.3 — 2026-09-30
 
 The shared Renovate preset now waits until a release is seven days old before proposing it, opens a pull request when Renovate renames an option your config uses, and no longer proposes changes to your `php` requirement, which the standard owns.

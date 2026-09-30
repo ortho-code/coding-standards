@@ -508,3 +508,13 @@ The code needs something only the new major has: the lowest job enforces this on
 The old major loses upstream support: keeping it lets projects install a version that no longer receives security fixes, so it goes, usually the next time the constraint is touched anyway.
 Supporting both majors costs more than it is worth: when staying compatible needs code that papers over the differences between them, the old major goes instead.
 What widening costs follows from the first reason: until the old major is dropped, the code has to keep working on that major's lowest version.
+
+## Agreed 2026-09-30 — the preset flags abandoned dependencies
+
+### `abandonments:recommended`, kept although it rarely has the data
+
+The preset extends `abandonments:recommended`, which marks a dependency with no release for a year as abandoned on the dependency dashboard.
+Measured on the engine, it judged 2 of the 13 Composer dependencies Renovate looked up and flagged neither, and it never judged `colinodell/json5`, whose last release dates from February 2024.
+Renovate judges abandonment only when a package's highest version is also its most recent release, and a package that lists a newer development branch, or still ships fixes for an older major, fails that test.
+It stays because it costs nothing and catches the case where the data is there.
+Packagist's own abandoned flag, which a package's maintainer sets, is the more reliable signal; `composer audit` reports it, and nothing in the standard runs that command.
